@@ -11,4 +11,189 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Model Users
+model Users {
+  userId      String     @id @default(uuid())
+  username    String     @unique
+  email       String     @unique
+  password    String?
+  otp         String?
+  googleId    String?
+  role        Roles       @default(USER)
+  isVerified  Boolean    @default(false)
+  profiles    Profiles?
+  address     Address[]
+  carts       Carts[]
+  transactions Transactions[]
+  ratings     Ratings[]
+  notifications Notifications[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Role users
+enum Roles {
+  ADMIN
+  USER
+}
+
+// Model Profile Users
+model Profiles {
+  profileId     String   @id @default(uuid())
+  userId        String   @unique
+  fullName      String?
+  phoneNumber   String?
+  gender String?
+  imageProfile String?
+  users         Users    @relation(fields: [userId], references: [userId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Address Users
+model Address {
+  addressId     String   @id @default(uuid())
+  userId        String
+  nameAddress   String?
+  address       String?
+  city          String?
+  country       String?
+  postalCode    String?
+  transactions  Transactions[]
+  users         Users    @relation(fields: [userId], references: [userId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Category
+model Categories {
+  categoryId    String   @id @default(uuid())
+  name          String
+  products      Products[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Product
+model Products {
+  productId     String   @id @default(uuid())
+  name          String
+  categoryId    String
+  price         Int
+  promoPrice    Int?
+  weight        Int?
+  stock         Int
+  description   String
+  image         String?
+  manageStock   ManageStock[]
+  carts         Carts[]
+  ratings       Ratings[]
+  category      Categories @relation(fields: [categoryId], references: [categoryId])
+  isDeleted     Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Supplier
+model Suppliers {
+  supplierId    String   @id @default(uuid())
+  name          String
+  email         String?
+  address       String?
+  phoneNumber   String?
+  manageStock   ManageStock[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model ManageStock
+model ManageStock {
+  manageStockId String @id @default(uuid())
+  supplierId    String
+  productId     String
+  stockIn         Int?
+  dateStockIn     DateTime
+  supplier      Suppliers @relation(fields: [supplierId], references: [supplierId])
+  product       Products @relation(fields: [productId], references: [productId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Carts
+model Carts {
+  cartId        String   @id @default(uuid())
+  userId        String
+  productId     String
+  qty           Int
+  transctions  Transactions[]
+  users         Users    @relation(fields: [userId], references: [userId])
+  products       Products @relation(fields: [productId], references: [productId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Promo
+model Promo {
+  promoId       String   @id @default(uuid())
+  name          String
+  discount      Int
+  activeAt      DateTime
+  expiresAt     DateTime
+  transactions  Transactions[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Transactions
+model Transactions {
+  transactionId String @id @default(uuid())
+  userId        String
+  cartId        String
+  promoId       String?
+  addressId     String
+  discount      Int @default(0)
+  total         Int
+  status_payment String
+  payment_type String?
+  transaction_time DateTime?
+  courier       String?
+  receiptDelivery       String?
+  shippingStatus  String @default("Pending")
+  address       Address @relation(fields: [addressId], references: [addressId])
+  promo         Promo? @relation(fields: [promoId], references: [promoId])
+  carts        Carts @relation(fields: [cartId], references: [cartId])
+  users         Users @relation(fields: [userId], references: [userId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Rating
+model Ratings {
+  ratingId      String   @id @default(uuid())
+  userId        String
+  productId     String
+  rating        Int
+  image         String?
+  review        String?
+  users         Users    @relation(fields: [userId], references: [userId])
+  products      Products @relation(fields: [productId], references: [productId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Model Notification
+model Notifications {
+  notificationId String @id @default(uuid())
+  userId         String
+  title          String
+  body           String
+  description    String?
+  isRead         Boolean @default(false)
+  isDeleted      Boolean @default(false)
+  users          Users @relation(fields: [userId], references: [userId])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
