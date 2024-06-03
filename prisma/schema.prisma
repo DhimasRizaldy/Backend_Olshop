@@ -138,7 +138,7 @@ model Carts {
 // Model Promo
 model Promo {
   promoId       String   @id @default(uuid())
-  name          String
+  codePromo           String
   discount      Int
   activeAt      DateTime
   expiresAt     DateTime

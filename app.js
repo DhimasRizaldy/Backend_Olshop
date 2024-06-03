@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+const yaml = require("yaml");
 const swaggerUi = require("swagger-ui-express");
 const fs = require("fs");
 const path = require("path");
@@ -53,5 +54,5 @@ app.use(serverError);
 
 // Server PORT
 app.listen(PORT, () => {
-  console.log(`Server is running : http://localhost ${PORT}`);
+  console.log(`Server is running : http://localhost:${PORT}`);
 });
