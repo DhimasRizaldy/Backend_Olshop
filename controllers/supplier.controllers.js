@@ -5,10 +5,10 @@ module.exports = {
   // create supplier
   createSupplier: async (req, res, next) => {
     try {
-      let { name, email, address, phoneNumber } = req.body;
+      const { name, email, address, phoneNumber } = req.body;
       const supplierId = uuidv4();
 
-      let newSupplier = await prisma.suppliers.create({
+      const newSupplier = await prisma.suppliers.create({
         data: {
           supplierId,
           name,
@@ -18,7 +18,7 @@ module.exports = {
         },
       });
 
-      res.status(200).json({
+      res.status(201).json({
         success: true,
         message: "Supplier created successfully",
         data: newSupplier,
@@ -31,11 +31,11 @@ module.exports = {
   // get all supplier
   getAllSupplier: async (req, res, next) => {
     try {
-      let supplier = await prisma.suppliers.findMany();
+      const suppliers = await prisma.suppliers.findMany();
       res.status(200).json({
         success: true,
-        message: "Get all supplier successfully",
-        data: supplier,
+        message: "Get all suppliers successfully",
+        data: suppliers,
       });
     } catch (error) {
       next(error);
@@ -45,10 +45,10 @@ module.exports = {
   // update supplier
   updateSupplier: async (req, res, next) => {
     try {
-      let { supplierId } = req.params;
-      let { name, email, address, phoneNumber } = req.body;
+      const { supplierId } = req.params;
+      const { name, email, address, phoneNumber } = req.body;
 
-      let findSupplier = await prisma.suppliers.findUnique({
+      const findSupplier = await prisma.suppliers.findUnique({
         where: {
           supplierId: supplierId,
         },
@@ -63,7 +63,7 @@ module.exports = {
         });
       }
 
-      let updateSupplier = await prisma.suppliers.update({
+      const updatedSupplier = await prisma.suppliers.update({
         where: {
           supplierId: supplierId,
         },
@@ -78,7 +78,7 @@ module.exports = {
       res.status(200).json({
         success: true,
         message: "Supplier updated successfully",
-        data: updateSupplier,
+        data: updatedSupplier,
       });
     } catch (error) {
       next(error);
@@ -88,8 +88,9 @@ module.exports = {
   // delete supplier
   deleteSupplier: async (req, res, next) => {
     try {
-      let { supplierId } = req.params;
-      let findSupplier = await prisma.suppliers.findUnique({
+      const { supplierId } = req.params;
+
+      const findSupplier = await prisma.suppliers.findUnique({
         where: {
           supplierId: supplierId,
         },
@@ -104,7 +105,7 @@ module.exports = {
         });
       }
 
-      let deleteSupplier = await prisma.suppliers.delete({
+      const deletedSupplier = await prisma.suppliers.delete({
         where: {
           supplierId: supplierId,
         },
@@ -113,7 +114,40 @@ module.exports = {
       res.status(200).json({
         success: true,
         message: "Supplier deleted successfully",
-        data: deleteSupplier,
+        data: deletedSupplier,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get supplier by id
+  getDetailSupplier: async (req, res, next) => {
+    try {
+      const { supplierId } = req.params;
+
+      const supplier = await prisma.suppliers.findUnique({
+        where: {
+          supplierId: supplierId,
+        },
+      });
+
+      // Kondisi jika supplier tidak ditemukan
+      if (!supplier) {
+        return res.status(404).json({
+          success: false,
+          message: "Supplier not found by id: " + supplierId,
+          err: null,
+          data: null,
+        });
+      }
+
+      // Respons jika supplier ditemukan
+      return res.status(200).json({
+        success: true,
+        message: "Successfully retrieved supplier details",
+        err: null,
+        data: supplier,
       });
     } catch (error) {
       next(error);

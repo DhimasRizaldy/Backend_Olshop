@@ -1,4 +1,3 @@
-const { number } = require("joi");
 const prisma = require("../libs/prisma");
 const { v4: uuidv4 } = require("uuid");
 
@@ -6,8 +5,17 @@ module.exports = {
   // create promo
   createPromo: async (req, res, next) => {
     try {
-      let { codePromo, activeAt, expiresAt } = req.body;
-      let discount = parseInt(req.body.discount, 10);
+      let { codePromo, activeAt, expiresAt, discount } = req.body;
+      discount = parseInt(discount, 10); // Konversi ke bilangan bulat
+
+      if (isNaN(discount)) {
+        // Periksa apakah input adalah angka
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be a number",
+          data: null,
+        });
+      }
 
       const promoId = uuidv4();
 
@@ -34,13 +42,17 @@ module.exports = {
   // get all promo
   getAllPromo: async (req, res, next) => {
     try {
+      // Mendapatkan semua promo dari database
       let promo = await prisma.promo.findMany();
+
+      // Mengirim respons sukses dengan data promo
       res.status(200).json({
         success: true,
         message: "Get all promo successfully",
         data: promo,
       });
     } catch (error) {
+      // Menangani kesalahan
       next(error);
     }
   },
@@ -48,10 +60,10 @@ module.exports = {
   // update promo
   updatePromo: async (req, res, next) => {
     try {
-      let { promoId } = req.params;
-      let { codePromo, discount, activeAt, expiresAt } = req.body;
+      const { promoId } = req.params;
+      const { codePromo, discount, activeAt, expiresAt } = req.body;
 
-      let findPromo = await prisma.promo.findUnique({
+      const findPromo = await prisma.promo.findUnique({
         where: {
           promoId: promoId,
         },
@@ -66,13 +78,13 @@ module.exports = {
         });
       }
 
-      let updatePromo = await prisma.promo.update({
+      const updatePromo = await prisma.promo.update({
         where: {
           promoId: promoId,
         },
         data: {
           codePromo,
-          discount,
+          discount: parseInt(discount, 10),
           activeAt,
           expiresAt,
         },
@@ -91,8 +103,8 @@ module.exports = {
   // delete promo
   deletePromo: async (req, res, next) => {
     try {
-      let { promoId } = req.params;
-      let findPromo = await prisma.promo.findUnique({
+      const { promoId } = req.params;
+      const findPromo = await prisma.promo.findUnique({
         where: {
           promoId: promoId,
         },
@@ -107,7 +119,7 @@ module.exports = {
         });
       }
 
-      let deletePromo = await prisma.promo.delete({
+      const deletePromo = await prisma.promo.delete({
         where: {
           promoId: promoId,
         },
@@ -117,6 +129,37 @@ module.exports = {
         success: true,
         message: "Promo deleted successfully",
         data: deletePromo,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get detail promo
+  getDetailPromo: async (req, res, next) => {
+    try {
+      const { promoId } = req.params;
+
+      const promo = await prisma.promo.findUnique({
+        where: {
+          promoId: promoId,
+        },
+      });
+
+      if (!promo) {
+        return res.status(404).json({
+          success: false,
+          message: "Promo not found by id: " + promoId,
+          err: null,
+          data: null,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Successfully retrieved promo details",
+        err: null,
+        data: promo,
       });
     } catch (error) {
       next(error);
