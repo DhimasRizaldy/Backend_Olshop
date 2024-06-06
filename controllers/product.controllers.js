@@ -15,10 +15,26 @@ module.exports = {
       weight = parseFloat(weight);
       stock = parseInt(stock, 10);
 
+      // Cek ketersediaan kategori
+      const category = await prisma.categories.findUnique({
+        where: {
+          categoryId: categoryId,
+        },
+      });
+
+      if (!category) {
+        return res.status(404).json({
+          success: false,
+          message: "Category not found",
+          err: "Category not found with id: " + categoryId,
+          data: null,
+        });
+      }
+
       const productId = uuidv4();
 
       let image = null;
-      // validation image
+      // validasi gambar
       if (req.file) {
         const strFile = req.file.buffer.toString("base64");
         const { url } = await imagekit.upload({
@@ -49,6 +65,262 @@ module.exports = {
         success: true,
         message: "Product created successfully",
         data: newProduct,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // gets all products
+  getAllProduct: async (req, res, next) => {
+    try {
+      let product;
+
+      if (req.query.search) {
+        const { search } = req.query;
+        product = await prisma.products.findMany({
+          where: {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+            isDeleted: false,
+          },
+          include: {
+            category: true,
+            ratings: true,
+          },
+        });
+      } else if (req.query.category) {
+        const { category } = req.query;
+        product = await prisma.products.findMany({
+          where: {
+            category: {
+              name: {
+                in: Array.isArray(category) ? category : [category],
+              },
+            },
+            isDeleted: false,
+          },
+          include: {
+            category: true,
+            ratings: true,
+          },
+        });
+      } else if (req.query.filter) {
+        const { filter } = req.query;
+        const filterOptions = {
+          populer: { orderBy: { ratings: { _avg: "desc" } } },
+          terbaru: { orderBy: { createdAt: "desc" } },
+        };
+        product = await prisma.products.findMany({
+          ...filterOptions[filter],
+          where: {
+            isDeleted: false,
+          },
+          include: {
+            category: true,
+            ratings: true,
+          },
+        });
+      } else if (req.query.page && req.query.limit) {
+        const { page = 1, limit = 10 } = req.query;
+        product = await prisma.products.findMany({
+          where: { isDeleted: false },
+          skip: (Number(page) - 1) * Number(limit),
+          take: Number(limit),
+          include: {
+            category: true,
+            ratings: true,
+          },
+        });
+      } else {
+        product = await prisma.products.findMany({
+          where: { isDeleted: false },
+          include: {
+            category: true,
+            ratings: true,
+          },
+        });
+      }
+
+      // Kalkulasi averageRating untuk setiap produk
+      product.forEach((product) => {
+        product.averageRating =
+          product.ratings.reduce((sum, rating) => sum + rating.rating, 0) /
+            product.ratings.length || 0;
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Get all products successfully",
+        data: product,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // update product
+  updateProduct: async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const {
+        name,
+        categoryId,
+        price,
+        promoPrice,
+        weight,
+        stock,
+        description,
+      } = req.body;
+
+      const product = await prisma.products.findUnique({
+        where: {
+          productId: productId,
+          isDeleted: false,
+        },
+      });
+
+      // kondisi jika product tidak ditemukan
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found by id : " + productId,
+          err: null,
+          data: null,
+        });
+      }
+
+      let imageUrl = product.image;
+
+      const imageFile = req.file;
+      if (imageFile) {
+        const strFile = imageFile.buffer.toString("base64");
+        const { url: uploadedUrl } = await imagekit.upload({
+          fileName: Date.now() + path.extname(imageFile.originalname),
+          file: strFile,
+        });
+        imageUrl = uploadedUrl;
+      }
+
+      let updateProduct = await prisma.products.update({
+        where: {
+          productId: productId,
+        },
+        data: {
+          name,
+          categoryId,
+          price,
+          promoPrice,
+          weight,
+          stock,
+          description,
+          image: imageUrl,
+        },
+      });
+
+      // kondisi jika update product gagal
+      if (!updateProduct) {
+        return res.status(500).json({
+          success: false,
+          message: "Update product failed",
+          err: null,
+          data: null,
+        });
+      }
+
+      // result jika update product sukses
+      res.status(200).json({
+        success: true,
+        message: "Product updated successfully",
+        data: updateProduct,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // delete product
+  deleteProduct: async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const product = await prisma.products.findUnique({
+        where: {
+          productId: productId,
+          isDeleted: false,
+        },
+      });
+
+      // kondisi jika product tidak ditemukan
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found by id : " + productId,
+          err: null,
+          data: null,
+        });
+      }
+
+      let deleteProduct = await prisma.products.update({
+        where: {
+          productId: productId,
+        },
+        data: {
+          isDeleted: true,
+        },
+      });
+
+      // kondisi jika delete product gagal
+      if (!deleteProduct) {
+        return res.status(500).json({
+          success: false,
+          message: "Delete product failed",
+          err: null,
+          data: null,
+        });
+      }
+
+      // result jika delete product sukses
+      res.status(200).json({
+        success: true,
+        message: "Product deleted successfully",
+        data: deleteProduct,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get product by id
+  getDetailProduct: async (req, res, next) => {
+    try {
+      const productId = req.params.productId;
+      const product = await prisma.products.findUnique({
+        where: {
+          productId: productId,
+        },
+        include: {
+          category: true,
+          ratings: true,
+        },
+      });
+
+      // kondisi jika product tidak ditemukan
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found by id : " + productId,
+          err: null,
+          data: null,
+        });
+      }
+
+      // result jika product ditemukan
+      res.status(200).json({
+        success: true,
+        message: "Get product successfully",
+        data: product,
       });
     } catch (error) {
       next(error);

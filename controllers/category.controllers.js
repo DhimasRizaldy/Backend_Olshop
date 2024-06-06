@@ -5,20 +5,20 @@ module.exports = {
   // create category
   createCategory: async (req, res, next) => {
     try {
-      let { name } = req.body;
-      const categoryId = uuidv4();
+      const { name } = req.body;
+      const categoryId = uuidv4(); // Memberikan nilai unik untuk categoryId
 
-      let newcategory = await prisma.categories.create({
+      let newCategory = await prisma.categories.create({
         data: {
-          categoryId,
-          name,
+          categoryId: categoryId, // Memberikan nilai categoryId yang unik
+          name: name,
         },
       });
 
       res.status(200).json({
         success: true,
         message: "Category created successfully",
-        data: newcategory,
+        data: newCategory,
       });
     } catch (error) {
       next(error);
@@ -28,11 +28,11 @@ module.exports = {
   // get all category
   getAllCategory: async (req, res, next) => {
     try {
-      let category = await prisma.categories.findMany();
+      let categories = await prisma.categories.findMany();
       res.status(200).json({
         success: true,
-        message: "Get all category successfully",
-        data: category,
+        message: "Get all categories successfully",
+        data: categories,
       });
     } catch (error) {
       next(error);
@@ -42,30 +42,33 @@ module.exports = {
   // update category
   updateCategory: async (req, res, next) => {
     try {
-      let { categoryId } = req.params;
-      let { name } = req.body;
+      const { categoryId } = req.params;
+      const { name } = req.body;
 
-      let findCategory = await prisma.categories.findUnique({
+      // Cari kategori yang akan diperbarui
+      const findCategory = await prisma.categories.findUnique({
         where: {
           categoryId: categoryId,
         },
       });
 
+      // Periksa apakah kategori ditemukan
       if (!findCategory) {
         return res.status(404).json({
           success: false,
-          message: "Not found",
+          message: "Category not found",
           err: "Category not found with id: " + categoryId,
           data: null,
         });
       }
 
-      let updateCategory = await prisma.categories.update({
+      // Perbarui kategori
+      const updateCategory = await prisma.categories.update({
         where: {
           categoryId: categoryId,
         },
         data: {
-          name,
+          name: name,
         },
       });
 
@@ -82,23 +85,27 @@ module.exports = {
   // delete category
   deleteCategory: async (req, res, next) => {
     try {
-      let { categoryId } = req.params;
-      let findCategory = await prisma.categories.findUnique({
+      const { categoryId } = req.params;
+
+      // Cari kategori yang akan dihapus
+      const findCategory = await prisma.categories.findUnique({
         where: {
           categoryId: categoryId,
         },
       });
 
+      // Periksa apakah kategori ditemukan
       if (!findCategory) {
         return res.status(404).json({
           success: false,
-          message: "Not found",
+          message: "Category not found",
           err: "Category not found with id: " + categoryId,
           data: null,
         });
       }
 
-      let deleteCategory = await prisma.categories.delete({
+      // Hapus kategori
+      const deleteCategory = await prisma.categories.delete({
         where: {
           categoryId: categoryId,
         },
