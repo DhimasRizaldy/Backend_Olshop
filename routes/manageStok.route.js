@@ -13,7 +13,7 @@ const verifyAdmin = require("../middlewares/verifyAdmin");
 // route managaeStok
 router.post("/", verifyToken, verifyAdmin, createManageStock);
 router.get("/", verifyToken, verifyAdmin, getAllManageStock);
-router.get("/:manageStockId", verifyAdmin, verifyToken, getManageStokById);
+router.get("/:manageStockId", getManageStokById);
 router.put("/:manageStockId", verifyToken, verifyAdmin, updateManageStok);
 router.delete("/:manageStockId", verifyToken, verifyAdmin, deleteManageStok);
 

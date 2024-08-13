@@ -101,24 +101,14 @@ module.exports = {
   getProfile: async (req, res, next) => {
     try {
       const { userId } = req.user;
-      let user = await prisma.users.findUnique({
-        where: {
-          userId,
-        },
-      });
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-          err: null,
-          data: null,
-        });
-      }
-
+      // Ambil profil pengguna beserta informasi user terkait
       let profile = await prisma.profiles.findUnique({
         where: {
           userId: userId,
+        },
+        include: {
+          users: true, // Sertakan data user terkait
         },
       });
 

@@ -12,7 +12,7 @@ const verifyAdmin = require("../middlewares/verifyAdmin");
 // route promo
 router.post("/", verifyToken, verifyAdmin, createPromo);
 router.get("/", getAllPromo);
-router.get("/", verifyToken, getDetailPromo);
+router.get("/:promoId", verifyToken, getDetailPromo);
 router.put("/:promoId", verifyToken, verifyAdmin, updatePromo);
 router.delete("/:promoId", verifyToken, verifyAdmin, deletePromo);
 

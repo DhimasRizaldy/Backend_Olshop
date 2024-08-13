@@ -134,7 +134,7 @@ module.exports = {
           promo: true, // Sertakan detail promo jika ada
           carts: {
             include: {
-              product: true, // Sertakan detail produk dalam keranjang
+              products: true, // Sertakan detail produk dalam keranjang (corrected field name)
             },
           },
           users: true, // Sertakan detail pengguna
@@ -149,7 +149,12 @@ module.exports = {
       });
     } catch (error) {
       // Menangani kesalahan jika terjadi
-      next(error);
+      console.error("Error fetching transaction details:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get transaction details",
+        error: error.message,
+      });
     }
   },
 
@@ -206,6 +211,20 @@ module.exports = {
       });
     } catch (error) {
       // Menangani kesalahan jika terjadi
+      next(error);
+    }
+  },
+
+  // get all transactional only admin
+  getAllTransactionAdmin: async (req, res, next) => {
+    try {
+      const transactions = await prisma.transactions.findMany();
+      return res.status(200).json({
+        success: true,
+        message: "Get all transactions successfully",
+        data: transactions,
+      });
+    } catch (error) {
       next(error);
     }
   },

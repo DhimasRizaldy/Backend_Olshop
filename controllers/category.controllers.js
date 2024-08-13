@@ -119,4 +119,24 @@ module.exports = {
       next(error);
     }
   },
+
+  // get category by id
+  getCategoryById: async (req, res, next) => {
+    try {
+      const { categoryId } = req.params;
+      const category = await prisma.categories.findUnique({
+        where: {
+          categoryId: categoryId,
+        },
+      });
+      res.status(200).json({
+        success: true,
+        message: "Get category successfully",
+        data: category,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+

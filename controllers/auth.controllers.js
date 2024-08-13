@@ -388,6 +388,145 @@ module.exports = {
     }
   },
 
+  // update admin
+  updateAdmin: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      const { username, email, password, confirmPassword, profileData } =
+        req.body; // Tambahkan profileData untuk data profil
+      let role = "ADMIN";
+      let isVerified = true;
+      const encryptedPassword = await bcrypt.hash(password, 10);
+
+      // Validasi input
+      if (
+        !username ||
+        !email ||
+        !password ||
+        !confirmPassword ||
+        !role ||
+        !profileData
+      ) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "All fields are required",
+          data: null,
+        });
+      }
+
+      if (
+        typeof username !== "string" ||
+        typeof email !== "string" ||
+        typeof password !== "string" ||
+        typeof confirmPassword !== "string" ||
+        typeof role !== "string"
+      ) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Invalid input type",
+          data: null,
+        });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Passwords do not match",
+          data: null,
+        });
+      }
+
+      if (password.length < 8 || password.length > 30) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Password must be between 8 and 30 characters",
+          data: null,
+        });
+      }
+
+      const passwordRegex = /^[a-zA-Z0-9]{8,30}$/;
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Password must contain only alphanumeric characters",
+          data: null,
+        });
+      }
+
+      // Update user and profile
+      let users = await prisma.users.update({
+        where: { userId },
+        data: {
+          username,
+          email,
+          password: encryptedPassword,
+          role,
+          isVerified,
+          profiles: {
+            update: {
+              ...profileData, // Mengupdate profil terkait dengan data baru
+            },
+          },
+        },
+        include: {
+          profiles: true, // Sertakan profil yang diperbarui dalam respons
+        },
+      });
+
+      // Remove password from user object
+      delete users.password;
+
+      // Return success response
+      return res.status(200).json({
+        status: true,
+        message: "Admin updated successfully",
+        data: users,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // delete admin
+  deleteAdmin: async (req, res, next) => {
+    try {
+      const { userId } = req.params; // Get the userId of the admin to be deleted from request parameters
+
+      // Delete related profiles
+      await prisma.profiles.deleteMany({
+        where: { userId },
+      });
+
+      // Delete related addresses
+      await prisma.address.deleteMany({
+        where: { userId },
+      });
+
+      // Delete user
+      const user = await prisma.users.delete({
+        where: { userId },
+      });
+
+      // Return success response
+      return res.status(200).json({
+        status: true,
+        message: "Admin deleted successfully",
+        data: user,
+      });
+    } catch (error) {
+      console.error("Error deleting admin and related data:", error.message);
+      return res.status(500).json({
+        status: false,
+        message: "Failed to delete admin",
+        error: error.message,
+      });
+    }
+  },
   // authenticate users (whoami)
   authenticate: async (req, res, next) => {
     try {
@@ -523,4 +662,70 @@ module.exports = {
   //     next(error);
   //   }
   // },
+
+  // update users
+  updateUsers: async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { fullName, phoneNumber, gender, imageProfile } = req.body;
+      const user = await prisma.users.findUnique({
+        where: { userId },
+      });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+          err: "User not found with id: " + userId,
+          data: null,
+        });
+      }
+      const updatedUser = await prisma.users.update({
+        where: { userId },
+        data: {
+          fullName,
+          phoneNumber,
+          gender,
+          imageProfile,
+        },
+      });
+      return res.status(200).json({
+        success: true,
+        message: "User updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // get all users
+  getAllUsers: async (req, res, next) => {
+    try {
+      const users = await prisma.users.findMany();
+      return res.status(200).json({
+        success: true,
+        message: "Get all users successfully",
+        data: users,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // get users by id
+  getUsersById: async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const user = await prisma.users.findUnique({
+        where: { userId },
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Get user by id successfully",
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

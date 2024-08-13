@@ -24,8 +24,8 @@ module.exports = {
           promoId,
           codePromo,
           discount,
-          activeAt,
-          expiresAt,
+          activeAt: new Date(activeAt),
+          expiresAt: new Date(expiresAt),
         },
       });
 
