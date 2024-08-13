@@ -1,199 +1,180 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// Model Users
 model Users {
-  userId      String     @id @default(uuid())
-  username    String     @unique
-  email       String     @unique
-  password    String?
-  otp         String?
-  googleId    String?
-  role        Roles       @default(USER)
-  isVerified  Boolean    @default(false)
-  profiles    Profiles?
-  address     Address[]
-  carts       Carts[]
-  transactions Transactions[]
-  ratings     Ratings[]
-  notifications Notifications[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-}
-
-// Role users
-enum Roles {
-  ADMIN
-  USER
-}
-
-// Model Profile Users
-model Profiles {
-  profileId     String   @id @default(uuid())
-  userId        String   @unique
-  fullName      String?
-  phoneNumber   String?
-  gender String?
-  imageProfile String?
-  users         Users    @relation(fields: [userId], references: [userId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// Model Address Users
-model Address {
-  addressId     String   @id @default(uuid())
-  userId        String
-  nameAddress   String?
-  address       String?
-  city          String?
-  country       String?
-  postalCode    String?
-  transactions  Transactions[]
-  users         Users    @relation(fields: [userId], references: [userId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// Model Category
-model Categories {
-  categoryId    String   @id @default(uuid())
-  name          String
-  products      Products[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// Model Product
-model Products {
-  productId     String   @id @default(uuid())
-  name          String
-  categoryId    String
-  price         Int
-  promoPrice    Int?
-  weight        Int?
-  stock         Int
-  description   String
-  image         String?
-  manageStock   ManageStock[]
+  userId        String          @id @default(uuid())
+  username      String          @unique
+  email         String          @unique
+  password      String?
+  otp           String?
+  googleId      String?
+  role          Roles           @default(USER)
+  isVerified    Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  address       Address[]
   carts         Carts[]
+  notifications Notifications[]
+  profiles      Profiles?
   ratings       Ratings[]
-  category      Categories @relation(fields: [categoryId], references: [categoryId])
-  isDeleted     Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  transactions  Transactions[]
 }
 
-// Model Supplier
+model Profiles {
+  profileId    String   @id @default(uuid())
+  userId       String   @unique
+  fullName     String?
+  phoneNumber  String?
+  gender       String?
+  imageProfile String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  users        Users    @relation(fields: [userId], references: [userId])
+}
+
+model Address {
+  addressId    String         @id @default(uuid())
+  userId       String
+  nameAddress  String?
+  address      String?
+  city         String?
+  country      String?
+  postalCode   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  users        Users          @relation(fields: [userId], references: [userId])
+  transactions Transactions[]
+}
+
+model Categories {
+  categoryId String     @id @default(uuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  products   Products[]
+}
+
+model Products {
+  productId   String        @id @default(uuid())
+  name        String
+  categoryId  String
+  price       Int
+  promoPrice  Int?
+  weight      Int?
+  stock       Int
+  description String
+  image       String?
+  isDeleted   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  carts       Carts[]
+  manageStock ManageStock[]
+  category    Categories    @relation(fields: [categoryId], references: [categoryId])
+  ratings     Ratings[]
+}
+
 model Suppliers {
-  supplierId    String   @id @default(uuid())
-  name          String
-  email         String?
-  address       String?
-  phoneNumber   String?
-  manageStock   ManageStock[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  supplierId  String        @id @default(uuid())
+  name        String
+  email       String?
+  address     String?
+  phoneNumber String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  manageStock ManageStock[]
 }
 
-// Model ManageStock
 model ManageStock {
-  manageStockId String @id @default(uuid())
+  manageStockId String    @id @default(uuid())
   supplierId    String
   productId     String
-  stockIn         Int?
-  dateStockIn     DateTime
+  stockIn       Int?
+  dateStockIn   DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  product       Products  @relation(fields: [productId], references: [productId])
   supplier      Suppliers @relation(fields: [supplierId], references: [supplierId])
-  product       Products @relation(fields: [productId], references: [productId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }
 
-// Model Carts
 model Carts {
-  cartId        String   @id @default(uuid())
-  userId        String
-  productId     String
-  qty           Int
-  transctions  Transactions[]
-  users         Users    @relation(fields: [userId], references: [userId])
-  products       Products @relation(fields: [productId], references: [productId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  cartId      String         @id @default(uuid())
+  userId      String
+  productId   String
+  qty         Int
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  products    Products       @relation(fields: [productId], references: [productId])
+  users       Users          @relation(fields: [userId], references: [userId])
+  transctions Transactions[]
 }
 
-// Model Promo
 model Promo {
-  promoId       String   @id @default(uuid())
-  codePromo           String
-  discount      Int
-  activeAt      DateTime
-  expiresAt     DateTime
-  transactions  Transactions[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  promoId      String         @id @default(uuid())
+  discount     Int
+  activeAt     DateTime
+  expiresAt    DateTime
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  codePromo    String
+  transactions Transactions[]
 }
 
-// Model Transactions
 model Transactions {
-  transactionId String @id @default(uuid())
-  userId        String
-  cartId        String
-  promoId       String?
-  addressId     String
-  discount      Int @default(0)
-  total         Int
-  status_payment String
-  payment_type String?
+  transactionId    String    @id @default(uuid())
+  userId           String
+  cartId           String
+  promoId          String?
+  addressId        String
+  discount         Int       @default(0)
+  total            Int
+  status_payment   String
+  payment_type     String?
   transaction_time DateTime?
-  courier       String?
-  receiptDelivery       String?
-  shippingStatus  String @default("Pending")
-  address       Address @relation(fields: [addressId], references: [addressId])
-  promo         Promo? @relation(fields: [promoId], references: [promoId])
-  carts        Carts @relation(fields: [cartId], references: [cartId])
-  users         Users @relation(fields: [userId], references: [userId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  courier          String?
+  receiptDelivery  String?
+  shippingStatus   String    @default("Pending")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  address          Address   @relation(fields: [addressId], references: [addressId])
+  carts            Carts     @relation(fields: [cartId], references: [cartId])
+  promo            Promo?    @relation(fields: [promoId], references: [promoId])
+  users            Users     @relation(fields: [userId], references: [userId])
 }
 
-// Model Rating
 model Ratings {
-  ratingId      String   @id @default(uuid())
-  userId        String
-  productId     String
-  rating        Int
-  image         String?
-  review        String?
-  users         Users    @relation(fields: [userId], references: [userId])
-  products      Products @relation(fields: [productId], references: [productId])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  ratingId  String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int
+  image     String?
+  review    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products  Products @relation(fields: [productId], references: [productId])
+  users     Users    @relation(fields: [userId], references: [userId])
 }
 
-// Model Notification
 model Notifications {
-  notificationId String @id @default(uuid())
+  notificationId String   @id @default(uuid())
   userId         String
   title          String
   body           String
   description    String?
-  isRead         Boolean @default(false)
-  isDeleted      Boolean @default(false)
-  users          Users @relation(fields: [userId], references: [userId])
+  isRead         Boolean  @default(false)
+  isDeleted      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  users          Users    @relation(fields: [userId], references: [userId])
+}
+
+enum Roles {
+  ADMIN
+  USER
 }
