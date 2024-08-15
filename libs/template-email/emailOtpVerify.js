@@ -10,21 +10,7 @@ module.exports = {
   <meta name="x-apple-disable-message-reformatting">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta content="telephone=no" name="format-detection">
-  <title>New Template 2</title>
-  <!--[if (mso 16)]>
-    <style type="text/css">
-    a {text-decoration: none;}
-    </style>
-    <![endif]-->
-  <!--[if gte mso 9]><style>sup { font-size: 100% !important; }</style><![endif]-->
-  <!--[if gte mso 9]>
-<xml>
-    <o:OfficeDocumentSettings>
-    <o:AllowPNG></o:AllowPNG>
-    <o:PixelsPerInch>96</o:PixelsPerInch>
-    </o:OfficeDocumentSettings>
-</xml>
-<![endif]-->
+  <title>Activation Account</title>
   <style type="text/css">
     .rollover:hover .rollover-first {
       max-height: 0px !important;
@@ -395,11 +381,6 @@ module.exports = {
 
 <body class="body" style="width:100%;height:100%;padding:0;Margin:0">
   <div dir="ltr" class="es-wrapper-color" lang="en" style="background-color:#FAFAFA">
-    <!--[if gte mso 9]>
-			<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
-				<v:fill type="tile" color="#fafafa"></v:fill>
-			</v:background>
-		<![endif]-->
     <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0"
       style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#FAFAFA">
       <tr>
@@ -455,7 +436,7 @@ module.exports = {
                               style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                               <tr>
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:20px;font-size:0px"><img
-                                    src="https://fcomrtp.stripocdn.email/content/guids/CABINET_bf9a7298cde85e8b5416aa8ac5e135f427c5341db6f2a873ad4acb87f6d43692/images/image.png"
+                                    src="https://ik.imagekit.io/xnl4hkzkx/logo-putkom.png?updatedAt=1723732981440"
                                     alt="Logo"
                                     style="display:block;font-size:12px;border:0;outline:none;text-decoration:none"
                                     title="Logo" class="adapt-img" width="365"></td>
@@ -505,34 +486,36 @@ module.exports = {
                                   style="Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px">
                                   <p
                                     style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px">
-                                    You’ve received this message because your email address has been registered with our
-                                    site. Please click the button below to verify your email address and confirm that
-                                    you are the owner of this account.</p>
+                                    Anda menerima pesan ini karena alamat email Anda telah terdaftar di situs kami. Klik
+                                    tombol di bawah ini untuk
+                                    memverifikasi alamat email Anda dan mengonfirmasi bahwa Anda adalah pemilik akun
+                                    ini.</p>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:5px">
                                   <p
                                     style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px">
-                                    If you did not register with us, please disregard this email.</p>
+                                    Jika Anda tidak mendaftar pada kami, abaikan email ini.</p>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px"><span
                                     class="es-button-border"
                                     style="border-style:solid;border-color:#2CB543;background:#5C68E2;border-width:0px;display:inline-block;border-radius:6px;width:auto">
-                                    <a href="${process.env.FRONTEND_URL}/verify-otp/?otp=${otp}&token=${token}" class="es-button" target="_blank"rel="noopener noreferrer"
-                                    style="mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:20px;padding:10px 30px 10px 30px;display:inline-block;background:#5C68E2;border-radius:6px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;mso-border-alt:10px solid #5C68E2;border-left-width:30px;border-right-width:30px">
-                                    CONFIRM YOUR EMAIL
+                                    <a href="${process.env.FRONTEND_URL}/verify-otp/?otp=${otp}&token=${token}"
+                                      class="es-button" target="_blank" rel="noopener noreferrer"
+                                      style="mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:20px;padding:10px 30px 10px 30px;display:inline-block;background:#5C68E2;border-radius:6px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:24px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;mso-border-alt:10px solid #5C68E2;border-left-width:30px;border-right-width:30px">
+                                      CONFIRM YOUR EMAIL
                                     </a>
-                                    </span></td>
+                                  </span></td>
                               </tr>
                               <tr>
                                 <td align="center" class="es-m-p0r es-m-p0l"
                                   style="Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px">
                                   <p
                                     style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px">
-                                    Once confirmed, this email will be uniquely associated with your account.</p>
+                                    Setelah dikonfirmasi, email ini akan dikaitkan secara unik dengan akun Anda.</p>
                                 </td>
                               </tr>
                             </table>
@@ -597,7 +580,7 @@ module.exports = {
                                 <td align="center" style="padding:0;Margin:0;padding-bottom:35px">
                                   <p
                                     style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;letter-spacing:0;color:#333333;font-size:12px">
-                                    CourseHub © 2023 CourseHub x Binar Academy</p>
+                                    Created © 2024 Putra Komputer</p>
                                 </td>
                               </tr>
                               <tr>
@@ -609,17 +592,20 @@ module.exports = {
                                         style="Margin:0;border:0;padding-top:5px;padding-bottom:5px;padding-right:5px;padding-left:5px">
                                         <a target="_blank" href=""
                                           style="mso-line-height-rule:exactly;text-decoration:none;font-family:arial, 'helvetica neue', helvetica, sans-serif;display:block;color:#999999;font-size:12px">Visit
-                                          Us </a></td>
+                                          Us </a>
+                                      </td>
                                       <td align="center" valign="top" width="33.33%"
                                         style="Margin:0;border:0;padding-top:5px;padding-bottom:5px;padding-right:5px;padding-left:5px;border-left:1px solid #cccccc">
                                         <a target="_blank" href=""
                                           style="mso-line-height-rule:exactly;text-decoration:none;font-family:arial, 'helvetica neue', helvetica, sans-serif;display:block;color:#999999;font-size:12px">Privacy
-                                          Policy</a></td>
+                                          Policy</a>
+                                      </td>
                                       <td align="center" valign="top" width="33.33%"
                                         style="Margin:0;border:0;padding-top:5px;padding-bottom:5px;padding-right:5px;padding-left:5px;border-left:1px solid #cccccc">
                                         <a target="_blank" href=""
                                           style="mso-line-height-rule:exactly;text-decoration:none;font-family:arial, 'helvetica neue', helvetica, sans-serif;display:block;color:#999999;font-size:12px">Terms
-                                          of Use</a></td>
+                                          of Use</a>
+                                      </td>
                                     </tr>
                                   </table>
                                 </td>

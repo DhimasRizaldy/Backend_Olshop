@@ -227,6 +227,14 @@ module.exports = {
         expiresIn: "1d",
       });
 
+      const otp = otpHandler.generateOTP(email);
+      // Send email
+      await nodemailer.sendEmail(
+        email,
+        "Account Verification OTP",
+        emailOtpVerify(otp, token)
+      );
+
       // Return success response
       return res.status(201).json({
         status: true,
@@ -565,7 +573,7 @@ module.exports = {
     try {
       const { token, otp } = req.query;
 
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
+      const decode = jwt.decode(token, process.env.JWT_SECRET);
 
       if (!decode) {
         return res.status(400).json({
@@ -603,7 +611,7 @@ module.exports = {
       // OTP yang sesuai, tandai verifikasi pengguna
       await prisma.users.update({
         where: { email: decode.email },
-        data: { isVerified: true },
+        data: { isVerified: true, otp: null },
       });
 
       return res.status(200).json({
@@ -617,51 +625,280 @@ module.exports = {
   },
 
   // forgot password
-  // forgotPassword: async (req, res, next) => {
-  //   try {
-  //     const { email } = req.body;
+  forgotPassword: async (req, res, next) => {
+    try {
+      const { email } = req.body;
 
-  //     const user = await prisma.users.findUnique({
-  //       where: { email },
-  //     });
+      const user = await prisma.users.findUnique({
+        where: { email },
+      });
 
-  //     if (!user) {
-  //       return res.status(400).json({
-  //         status: false,
-  //         message: "Bad Request",
-  //         err: "User not found",
-  //         data: null,
-  //       });
-  //     } else {
-  //       const token = jwt.sign(
-  //         {
-  //           userId: user.userId,
-  //           name: user.username,
-  //           email: user.email,
-  //         },
-  //         process.env.JWT_SECRET,
-  //         {
-  //           expiresIn: "1h",
-  //         }
-  //       );
+      if (!user) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "User not found",
+          data: null,
+        });
+      } else {
+        const token = jwt.sign(
+          {
+            userId: user.userId,
+            name: user.username,
+            email: user.email,
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1h",
+          }
+        );
 
-  //       await nodemailer.sendEmail(
-  //         email,
-  //         "Reset Password Request",
-  //         emailResetPassword(token, user)
-  //       );
+        await nodemailer.sendEmail(
+          email,
+          "Reset Password Request",
+          emailResetPassword(token, user)
+        );
 
-  //       return res.json({
-  //         status: true,
-  //         message: "Password reset link sent to email successfully",
-  //         err: null,
-  //         data: null,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // },
+        return res.json({
+          status: true,
+          message: "Password reset link sent to email successfully",
+          err: null,
+          data: null,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // reset password
+  resetPassword: async (req, res, next) => {
+    try {
+      const { token } = req.query;
+
+      const decode = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (!decode) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid token",
+          err: null,
+          data: null,
+        });
+      }
+
+      const { password, confirmPassword } = req.body;
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          status: false,
+          message: "Password & Confirm_Password do not match!",
+          err: null,
+          data: null,
+        });
+      }
+
+      await prisma.users.update({
+        where: { email: decode.email },
+        data: { password: await bcrypt.hash(password, 10) },
+      });
+
+      await prisma.notifications.create({
+        data: {
+          title: "Notification",
+          notificationId: uuidv4(),
+          message: "Password reset successfully",
+          userId: decode.userId,
+        },
+      });
+
+      return res.status(200).json({
+        status: true,
+        message: "Password reset successfully",
+        err: null,
+        data: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // change password
+  changePassword: async (req, res, next) => {
+    try {
+      const { old_password, new_password, confirm_password } = req.body;
+      const { email } = req.user;
+
+      if (new_password !== confirm_password) {
+        return res.status(400).json({
+          status: false,
+          message: "Password & Confirm_Password do not match!",
+          err: null,
+          data: null,
+        });
+      }
+
+      const user = await prisma.users.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "User not found",
+          data: null,
+        });
+      }
+
+      const isMatch = await bcrypt.compare(old_password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({
+          status: false,
+          messaga: "Old password is incorrect",
+          err: null,
+          data: null,
+        });
+      }
+
+      const encryptedPassword = await bcrypt.hash(new_password, 10);
+      await prisma.users.update({
+        where: { email },
+        data: { password: encryptedPassword },
+      });
+
+      await prisma.notifications.create({
+        data: {
+          title: "Notification",
+          notificationId: uuidv4(),
+          message: "Password changed successfully",
+          userId: user.userId,
+        },
+      });
+
+      return res.status(200).json({
+        status: true,
+        message: "Password changed successfully",
+        err: null,
+        data: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // resend otp
+  resendOTP: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const user = await prisma.users.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "User not found",
+          data: null,
+        });
+      }
+
+      if (user.isVerified) {
+        return res.status(400).json({
+          status: false,
+          message: "User already verified",
+          err: null,
+          data: null,
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          email: user.email,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
+
+      const otp = otpHandler.generateOTP(email);
+      await nodemailer.sendEmail(
+        email,
+        "Account Activation OTP",
+        emailOtpVerify(token, otp)
+      );
+
+      return res.status(200).json({
+        status: true,
+        message: "OTP sent to email successfully",
+        err: null,
+        data: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // login with google
+  loginGoogle: async (req, res, next) => {
+    try {
+      const { access_token } = req.body;
+
+      if (!access_token) {
+        return res.status(400).json({
+          status: false,
+          message: "Bad Request",
+          err: "Access token is required",
+          data: null,
+        });
+      }
+
+      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+
+      const { email, name, picture } = (await axios.get(response)).data;
+
+      const user = await prisma.users.findUnique({
+        where: { email: email },
+        include: { profiles: true },
+      });
+
+      if (!user) {
+        user = await prisma.users.upsert({
+          where: { email: email },
+          update: {
+            googleId: response.data.sub,
+            profiles: { update: { imageProfile: picture } },
+          },
+          create: {
+            username: name,
+            email: email,
+            googleId: response.data.sub,
+            isVerified: true,
+            profiles: { create: { fullName: name, imageProfile: picture } },
+          },
+        });
+      }
+
+      delete user.password;
+
+      let token = jwt.sign(
+        { id: user.userId, username: user.username, email: user.email },
+        process.env.JWT_SECRET
+      );
+
+      return res.status(200).json({
+        status: true,
+        message: "User logged in successfully",
+        err: null,
+        data: { user, token },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 
   // update users
   updateUsers: async (req, res, next) => {
@@ -722,7 +959,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         message: "Get user by id successfully",
-        data: user,
+        data: { ...user, token },
       });
     } catch (error) {
       next(error);
