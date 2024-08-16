@@ -713,7 +713,7 @@ module.exports = {
         data: {
           title: "Notification",
           notificationId: uuidv4(),
-          message: "Password reset successfully",
+          body: "Password reset successfully",
           userId: decode.userId,
         },
       });
