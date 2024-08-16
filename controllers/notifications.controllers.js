@@ -84,7 +84,10 @@ module.exports = {
       const { notificationId } = req.params;
       const notification = await prisma.notifications.findUnique({
         where: {
-          AND: [{ notificationId }, { userId: req.user.userId }],
+          notificationId: notificationId,
+          AND: {
+            userId: req.user.userId,
+          },
         },
       });
 
