@@ -777,7 +777,7 @@ module.exports = {
         data: {
           title: "Notification",
           notificationId: uuidv4(),
-          message: "Password changed successfully",
+          body: "Password changed successfully",
           userId: user.userId,
         },
       });
