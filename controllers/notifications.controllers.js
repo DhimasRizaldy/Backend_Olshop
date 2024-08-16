@@ -82,42 +82,41 @@ module.exports = {
   updateMyNotifications: async (req, res, next) => {
     try {
       const { notificationId } = req.params;
-      const notification = await prisma.notifications.findUnique({
+
+      const notifications = await prisma.notifications.findUnique({
         where: {
-          notificationId: notificationId,
-          AND: {
-            userId: req.user.userId,
-          },
+          notificationId: Number(notificationId),
+          userId: req.user.userId,
         },
       });
 
-      if (!notification) {
+      if (!notifications) {
         return res.status(404).json({
           status: false,
-          message: "Notification not found",
-          err: null,
-          data: null,
+          message: "Notifications not found",
         });
       }
 
-      const updatedNotification = await prisma.notifications.update({
+      const updatedNotifications = await prisma.notifications.update({
         where: {
-          AND: [{ notificationId }, { userId: req.user.userId }],
+          notificationId: Number(notificationId),
+          userId: req.user.userId,
         },
         data: {
           isRead: true,
         },
       });
-      return res.status(200).json({
+
+      res.status(200).json({
         status: true,
-        message: "Notification updated successfully",
-        err: null,
-        data: updatedNotification,
+        message: "Notifications updated successfully",
+        data: updatedNotifications,
       });
     } catch (error) {
       next(error);
     }
   },
+
   // delete my notifications
   deleteMyNotifications: async (req, res, next) => {
     try {
