@@ -223,11 +223,17 @@ module.exports = {
       delete users.password;
 
       // Generate token
-      const token = jwt.sign({ email: users.email }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-      });
+      const token = jwt.sign(
+        {
+          email: users.email,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1d",
+        }
+      );
 
-      const otp = otpHandler.generateOTP(email);
+      const otp = await otpHandler.generateOTP(email);
       // Send email
       await nodemailer.sendEmail(
         email,
