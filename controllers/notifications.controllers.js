@@ -84,10 +84,7 @@ module.exports = {
       const { notificationId } = req.params;
       const notification = await prisma.notifications.findUnique({
         where: {
-          notificationId_userId: {
-            notificationId,
-            userId: req.user.userId,
-          },
+          AND: [{ notificationId }, { userId: req.user.userId }],
         },
       });
 
@@ -102,10 +99,7 @@ module.exports = {
 
       const updatedNotification = await prisma.notifications.update({
         where: {
-          notificationId_userId: {
-            notificationId,
-            userId: req.user.userId,
-          },
+          AND: [{ notificationId }, { userId: req.user.userId }],
         },
         data: {
           isRead: true,
@@ -121,7 +115,6 @@ module.exports = {
       next(error);
     }
   },
-
   // delete my notifications
   deleteMyNotifications: async (req, res, next) => {
     try {
