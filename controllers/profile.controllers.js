@@ -22,7 +22,7 @@ module.exports = {
   updateProfile: async (req, res, next) => {
     try {
       const userId = req.user.userId;
-      const { fullName, phoneNumber, gender } = req.body;
+      const { username, email, fullName, phoneNumber, gender } = req.body;
       const file = req.file;
 
       let user = await prisma.users.findUnique({
@@ -69,6 +69,18 @@ module.exports = {
         imageProfileUrl = url;
       }
 
+      // Update users table
+      await prisma.users.update({
+        where: {
+          userId: userId,
+        },
+        data: {
+          username,
+          email,
+        },
+      });
+
+      // Update profiles table
       const updateProfileUser = await prisma.profiles.update({
         where: {
           userId: userId,
@@ -81,11 +93,21 @@ module.exports = {
         },
       });
 
+      // Fetch updated user data
+      const updatedUser = await prisma.users.findUnique({
+        where: {
+          userId,
+        },
+      });
+
       return res.status(200).json({
         success: true,
         message: "Successfully updated user profile",
         err: null,
-        data: updateProfileUser,
+        data: {
+          user: updatedUser,
+          profile: updateProfileUser,
+        },
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging
