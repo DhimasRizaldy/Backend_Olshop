@@ -178,12 +178,11 @@ module.exports = {
       const product = await prisma.products.findUnique({
         where: {
           productId: productId,
-          isDeleted: false,
         },
       });
 
       // kondisi jika product tidak ditemukan
-      if (!product) {
+      if (!product || product.isDeleted) {
         return res.status(404).json({
           success: false,
           message: "Product not found by id : " + productId,
@@ -211,10 +210,10 @@ module.exports = {
         data: {
           name,
           categoryId,
-          price,
-          promoPrice,
-          weight,
-          stock,
+          price: parseInt(price, 10),
+          promoPrice: parseInt(promoPrice, 10),
+          weight: parseInt(weight, 10),
+          stock: parseInt(stock, 10),
           description,
           image: imageUrl,
         },
