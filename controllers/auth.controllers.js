@@ -549,16 +549,10 @@ module.exports = {
       delete user.password;
       let userDetail = null;
 
-      if (user.role === "USER") {
-        userDetail = await prisma.users.findUnique({
-          where: { userId: user.userId },
-          include: { profiles: true },
-        });
-      } else if (user.role === "ADMIN") {
-        userDetail = await prisma.users.findUnique({
-          where: { userId: user.userId },
-        });
-      }
+      userDetail = await prisma.users.findUnique({
+        where: { userId: user.userId },
+        include: { profiles: true },
+      });
 
       delete userDetail.password;
 
