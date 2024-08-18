@@ -814,6 +814,23 @@ module.exports = {
         });
       }
 
+      // Hapus OTP lama dari database
+      await prisma.otp.deleteMany({
+        where: { email },
+      });
+
+      // Buat OTP baru
+      const otp = await otpHandler.generateOTP(email);
+
+      // Simpan OTP baru ke database
+      await prisma.otp.create({
+        data: {
+          email,
+          otp,
+          createdAt: new Date(),
+        },
+      });
+
       const token = jwt.sign(
         {
           email: user.email,
@@ -824,8 +841,7 @@ module.exports = {
         }
       );
 
-      const otp = await otpHandler.generateOTP(email);
-      // Send email
+      // Kirim email
       await nodemailer.sendEmail(
         email,
         "Account Verification OTP",
