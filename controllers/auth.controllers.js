@@ -676,31 +676,59 @@ module.exports = {
     try {
       const { token } = req.query;
 
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
-
-      if (!decode) {
-        return res.status(400).json({
-          status: false,
-          message: "Invalid token",
-          err: null,
-          data: null,
-        });
+      let decode;
+      try {
+        decode = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (err) {
+        if (err.name === "TokenExpiredError") {
+          return res.status(400).json({
+            status: false,
+            message: "Token has expired",
+            err: err.message,
+            data: null,
+          });
+        } else if (err.name === "JsonWebTokenError") {
+          return res.status(400).json({
+            status: false,
+            message: "Invalid token",
+            err: err.message,
+            data: null,
+          });
+        } else {
+          return res.status(400).json({
+            status: false,
+            message: "Token verification failed",
+            err: err.message,
+            data: null,
+          });
+        }
       }
 
       const { password, confirmPassword } = req.body;
 
-      if (password !== confirmPassword) {
+      if (!password || !confirmPassword) {
         return res.status(400).json({
           status: false,
-          message: "Password & Confirm_Password do not match!",
+          message: "Password and Confirm Password are required",
           err: null,
           data: null,
         });
       }
 
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          status: false,
+          message: "Password & Confirm Password do not match!",
+          err: null,
+          data: null,
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       await prisma.users.update({
         where: { email: decode.email },
-        data: { password: await bcrypt.hash(password, 10) },
+        data: { password: hashedPassword },
       });
 
       await prisma.notifications.create({
@@ -719,7 +747,7 @@ module.exports = {
         data: null,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   },
 
