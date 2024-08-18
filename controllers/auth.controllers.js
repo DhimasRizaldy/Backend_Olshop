@@ -663,7 +663,9 @@ module.exports = {
           status: true,
           message: "Password reset link sent to email successfully",
           err: null,
-          data: null,
+          data: {
+            token, // Menyertakan token dalam respons
+          },
         });
       }
     } catch (error) {
