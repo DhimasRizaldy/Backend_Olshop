@@ -814,21 +814,13 @@ module.exports = {
         });
       }
 
-      // Hapus OTP lama dari database
-      await prisma.otp.deleteMany({
-        where: { email },
-      });
-
       // Buat OTP baru
       const otp = await otpHandler.generateOTP(email);
 
-      // Simpan OTP baru ke database
-      await prisma.otp.create({
-        data: {
-          email,
-          otp,
-          createdAt: new Date(),
-        },
+      // Perbarui OTP di database
+      await prisma.users.update({
+        where: { email },
+        data: { otp },
       });
 
       const token = jwt.sign(
