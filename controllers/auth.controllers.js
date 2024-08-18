@@ -824,18 +824,19 @@ module.exports = {
         }
       );
 
-      const otp = otpHandler.generateOTP(email);
+      const otp = await otpHandler.generateOTP(email);
+      // Send email
       await nodemailer.sendEmail(
         email,
-        "Account Activation OTP",
-        emailOtpVerify(token, otp)
+        "Account Verification OTP",
+        emailOtpVerify(otp, token)
       );
 
       return res.status(200).json({
         status: true,
         message: "OTP sent to email successfully",
         err: null,
-        data: null,
+        data: token,
       });
     } catch (error) {
       next(error);
