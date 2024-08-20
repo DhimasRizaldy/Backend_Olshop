@@ -24,5 +24,7 @@ router.use("/manageStok", require("./manageStok.route"));
 router.use("/transaction", require("./transactions.route"));
 // ratings route
 router.use("/ratings", require("./ratings.route"));
+// payment route
+router.use("/payment", require("./payment.route"));
 
 module.exports = router;

@@ -1,23 +1,21 @@
 const router = require("express").Router();
 
 const {
-  createTransaction,
-  getAllTransaction,
+  getAllTransactionMe,
   getDetailTransaction,
   updateTransaction,
   deleteTransaction,
-  getAllTransactionAdmin,
+  getAllTransaction,
 } = require("../controllers/transactions.controllers");
 const verifyToken = require("../middlewares/verifyToken");
 const verifyAdmin = require("../middlewares/verifyAdmin");
 
 // route transaction
 
-router.post("/", verifyToken, createTransaction);
-router.get("/", verifyToken, getAllTransaction);
-router.get("/:transactionId", verifyToken, getDetailTransaction);
-router.put("/:transactionId", verifyToken, updateTransaction);
+router.get("/", verifyToken, verifyAdmin, getAllTransaction);
+router.get("/me", verifyToken, getAllTransactionMe);
+router.get("/:transactionId", verifyAdmin, verifyToken, getDetailTransaction);
+router.put("/:transactionId", verifyAdmin, verifyToken, updateTransaction);
 router.delete("/:transactionId", verifyToken, deleteTransaction);
-router.get("/", verifyAdmin, getAllTransactionAdmin);
 
 module.exports = router;

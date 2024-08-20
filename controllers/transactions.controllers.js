@@ -1,100 +1,10 @@
 const prisma = require("../libs/prisma");
 const { v4: uuidv4 } = require("uuid");
+const { getPagination } = require("../libs/getPagination");
 
 module.exports = {
-  // create transaction
-  createTransaction: async (req, res, next) => {
-    try {
-      // Mengambil data dari body permintaan
-      const {
-        cartId,
-        promoId,
-        addressId,
-        discount,
-        total,
-        payment_type,
-        courier,
-        receiptDelivery,
-      } = req.body;
-
-      // Membuat ID untuk transaksi baru
-      const transactionId = uuidv4();
-
-      const userId = req.user.userId;
-
-      // Memperbarui stok produk sesuai dengan transaksi
-      const updateProductStock = async (cart) => {
-        const { productId, qty } = cart; // Pastikan menggunakan 'qty' bukan 'quantity'
-        const product = await prisma.products.findUnique({
-          where: {
-            productId: productId,
-          },
-        });
-
-        // Mengurangi stok produk berdasarkan jumlah yang dibeli dalam keranjang
-        if (product) {
-          await prisma.products.update({
-            where: {
-              productId: productId,
-            },
-            data: {
-              stock: {
-                decrement: qty, // Pastikan menggunakan 'qty'
-              },
-            },
-          });
-        }
-      };
-
-      // Memperbarui stok produk untuk setiap item dalam keranjang
-      const updateProductStocks = async () => {
-        const carts = await prisma.carts.findMany({
-          where: {
-            cartId: cartId,
-          },
-        });
-        for (const cart of carts) {
-          await updateProductStock(cart);
-        }
-      };
-
-      // Memperbarui stok produk dan membuat transaksi
-      await prisma.$transaction(async (prisma) => {
-        await updateProductStocks();
-        await prisma.transactions.create({
-          data: {
-            transactionId: transactionId,
-            userId: userId,
-            cartId: cartId,
-            promoId: promoId,
-            addressId: addressId,
-            discount: discount,
-            total: total,
-            payment_type: payment_type,
-            courier: courier,
-            receiptDelivery: receiptDelivery,
-            status_payment: "Pending",
-            shippingStatus: "Pending",
-          },
-        });
-      });
-
-      // Mengirimkan respons sukses
-      return res.status(200).json({
-        success: true,
-        message: "Transaction created successfully",
-        data: {
-          transactionId: transactionId,
-        },
-      });
-    } catch (error) {
-      // Menangani kesalahan jika terjadi
-      next(error);
-    }
-  },
-
   // get all transaction
-  getAllTransaction: async (req, res, next) => {
+  getAllTransactionMe: async (req, res, next) => {
     try {
       // Mendapatkan ID pengguna dari permintaan
       const userId = req.user.userId; // Asumsi req.user.userId berisi ID pengguna
@@ -216,15 +126,19 @@ module.exports = {
   },
 
   // get all transactional only admin
-  getAllTransactionAdmin: async (req, res, next) => {
+  getAllTransaction: async (req, res, next) => {
     try {
+      // Mengambil semua transaksi
       const transactions = await prisma.transactions.findMany();
+
+      // Mengirimkan respons dengan daftar transaksi
       return res.status(200).json({
         success: true,
         message: "Get all transactions successfully",
         data: transactions,
       });
     } catch (error) {
+      // Menangani kesalahan jika terjadi
       next(error);
     }
   },
