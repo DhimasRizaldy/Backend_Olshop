@@ -45,8 +45,27 @@ module.exports = {
   // get all ratings
   getAllRatings: async (req, res, next) => {
     try {
-      // Mengambil semua entri dari tabel Ratings
-      const allRatings = await prisma.ratings.findMany();
+      // Mengambil semua entri dari tabel Ratings bersama data terkait dari tabel Users dan Products
+      const allRatings = await prisma.ratings.findMany({
+        include: {
+          users: {
+            select: {
+              userId: true,
+              username: true,
+              email: true,
+              // Tambahkan field lain yang Anda butuhkan dari Users
+            },
+          },
+          products: {
+            select: {
+              productId: true,
+              name: true,
+              price: true,
+              // Tambahkan field lain yang Anda butuhkan dari Products
+            },
+          },
+        },
+      });
 
       // Mengirimkan respons sukses bersama dengan daftar semua penilaian
       return res.status(200).json({
