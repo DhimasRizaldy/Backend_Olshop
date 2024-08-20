@@ -33,7 +33,6 @@ module.exports = {
       let newCarts = await prisma.carts.create({
         data: {
           cartId: cartId,
-          productId: productId,
           qty: qty,
           users: {
             connect: { userId: userId },
