@@ -14,6 +14,33 @@ module.exports = {
         where: {
           userId: userId,
         },
+        include: {
+          users: {
+            select: {
+              username: true,
+              email: true,
+            },
+          },
+          carts: {
+            include: {
+              products: {
+                select: {
+                  name: true, // Sesuaikan jika Anda ingin menampilkan nama produk dari cart
+                },
+              },
+            },
+          },
+          promo: {
+            select: {
+              codePromo: true,
+            },
+          },
+          address: {
+            select: {
+              nameAddress: true, // Menggunakan field nameAddress sesuai schema
+            },
+          },
+        },
       });
 
       // Mengirimkan respons dengan daftar transaksi
@@ -128,8 +155,36 @@ module.exports = {
   // get all transactional only admin
   getAllTransaction: async (req, res, next) => {
     try {
-      // Mengambil semua transaksi
-      const transactions = await prisma.transactions.findMany();
+      // Mengambil semua transaksi dengan relasi terkait
+      const transactions = await prisma.transactions.findMany({
+        include: {
+          users: {
+            select: {
+              username: true,
+              email: true,
+            },
+          },
+          carts: {
+            include: {
+              products: {
+                select: {
+                  name: true, // Menyertakan nama produk
+                },
+              },
+            },
+          },
+          promo: {
+            select: {
+              codePromo: true,
+            },
+          },
+          address: {
+            select: {
+              nameAddress: true, // Menggunakan field nameAddress sesuai skema
+            },
+          },
+        },
+      });
 
       // Mengirimkan respons dengan daftar transaksi
       return res.status(200).json({
