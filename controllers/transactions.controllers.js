@@ -24,7 +24,7 @@ module.exports = {
 
       // Memperbarui stok produk sesuai dengan transaksi
       const updateProductStock = async (cart) => {
-        const { productId, quantity } = cart;
+        const { productId, qty } = cart; // Pastikan menggunakan 'qty' bukan 'quantity'
         const product = await prisma.products.findUnique({
           where: {
             productId: productId,
@@ -39,7 +39,7 @@ module.exports = {
             },
             data: {
               stock: {
-                decrement: quantity,
+                decrement: qty, // Pastikan menggunakan 'qty'
               },
             },
           });
@@ -53,9 +53,9 @@ module.exports = {
             cartId: cartId,
           },
         });
-        carts.forEach(async (cart) => {
+        for (const cart of carts) {
           await updateProductStock(cart);
-        });
+        }
       };
 
       // Memperbarui stok produk dan membuat transaksi
