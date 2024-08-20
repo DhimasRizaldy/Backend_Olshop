@@ -5,7 +5,7 @@ module.exports = {
   // create carts
   createCarts: async (req, res, next) => {
     try {
-      let { qty } = req.body;
+      let { qty, productId } = req.body;
       if (!qty || !Number.isInteger(qty) || qty <= 0) {
         return res.status(400).json({
           success: false,
@@ -13,14 +13,20 @@ module.exports = {
         });
       }
 
-      const cartId = uuidv4();
-      const userId = req.user.userId;
-      const productId = req.product.productId;
-
-      if (!userId || !productId) {
+      if (!productId) {
         return res.status(400).json({
           success: false,
-          message: "User ID or Product ID is missing",
+          message: "Product ID is missing",
+        });
+      }
+
+      const cartId = uuidv4();
+      const userId = req.user.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "User ID is missing",
         });
       }
 
