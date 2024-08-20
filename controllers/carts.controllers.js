@@ -14,8 +14,8 @@ module.exports = {
       }
 
       const cartId = uuidv4();
-      const userId = req.user?.userId;
-      const productId = req.product?.productId;
+      const userId = req.user.userId;
+      const productId = req.product.productId;
 
       if (!userId || !productId) {
         return res.status(400).json({
