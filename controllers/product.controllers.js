@@ -75,88 +75,74 @@ module.exports = {
   getAllProduct: async (req, res, next) => {
     try {
       let products;
+      const {
+        search,
+        category,
+        filter,
+        minRating,
+        maxRating,
+        page = 1,
+        limit = 10,
+      } = req.query;
 
-      // Check if a search query is provided
-      if (req.query.search) {
-        const { search } = req.query;
-        products = await prisma.products.findMany({
-          where: {
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-            isDeleted: false,
-          },
-          include: {
-            category: true,
-            ratings: true,
-          },
-        });
+      // Build base query
+      const baseQuery = {
+        where: { isDeleted: false },
+        include: {
+          category: true,
+          ratings: true,
+        },
+        skip: (Number(page) - 1) * Number(limit),
+        take: Number(limit),
+      };
+
+      // Apply search filter
+      if (search) {
+        baseQuery.where.name = {
+          contains: search,
+          mode: "insensitive",
+        };
       }
-      // Check if a category filter is provided
-      else if (req.query.category) {
-        const { category } = req.query;
-        products = await prisma.products.findMany({
-          where: {
-            category: {
-              name: category, // Filter by category name directly
-            },
-            isDeleted: false,
-          },
-          include: {
-            category: true,
-            ratings: true,
-          },
-        });
+
+      // Apply category filter
+      if (category) {
+        baseQuery.where.category = {
+          name: category,
+        };
       }
-      // Check if a sort filter is provided
-      else if (req.query.filter) {
-        const { filter } = req.query;
+
+      // Apply sort filter
+      if (filter) {
         const filterOptions = {
           populer: { orderBy: { ratings: { _avg: "desc" } } },
           terbaru: { orderBy: { createdAt: "desc" } },
         };
-        products = await prisma.products.findMany({
-          ...filterOptions[filter],
-          where: {
-            isDeleted: false,
-          },
-          include: {
-            category: true,
-            ratings: true,
-          },
-        });
-      }
-      // Check if pagination is needed
-      else if (req.query.page && req.query.limit) {
-        const { page = 1, limit = 10 } = req.query;
-        products = await prisma.products.findMany({
-          where: { isDeleted: false },
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          include: {
-            category: true,
-            ratings: true,
-          },
-        });
-      }
-      // Default case: no filters applied
-      else {
-        products = await prisma.products.findMany({
-          where: { isDeleted: false },
-          include: {
-            category: true,
-            ratings: true,
-          },
-        });
+        baseQuery.orderBy = filterOptions[filter].orderBy;
       }
 
-      // Calculate averageRating for each product
-      products.forEach((product) => {
-        product.averageRating =
+      // Fetch products
+      products = await prisma.products.findMany(baseQuery);
+
+      // Calculate averageRating and apply rating filters
+      products = products.map((product) => {
+        const averageRating =
           product.ratings.reduce((sum, rating) => sum + rating.rating, 0) /
             product.ratings.length || 0;
+        return {
+          ...product,
+          averageRating,
+        };
       });
+
+      // Apply rating filters if provided
+      if (minRating || maxRating) {
+        products = products.filter((product) => {
+          return (
+            (!minRating || product.averageRating >= minRating) &&
+            (!maxRating || product.averageRating <= maxRating)
+          );
+        });
+      }
 
       return res.status(200).json({
         success: true,
