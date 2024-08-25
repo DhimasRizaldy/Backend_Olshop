@@ -74,11 +74,12 @@ module.exports = {
   // gets all products
   getAllProduct: async (req, res, next) => {
     try {
-      let product;
+      let products;
 
+      // Check if a search query is provided
       if (req.query.search) {
         const { search } = req.query;
-        product = await prisma.products.findMany({
+        products = await prisma.products.findMany({
           where: {
             name: {
               contains: search,
@@ -91,14 +92,14 @@ module.exports = {
             ratings: true,
           },
         });
-      } else if (req.query.category) {
+      }
+      // Check if a category filter is provided
+      else if (req.query.category) {
         const { category } = req.query;
-        product = await prisma.products.findMany({
+        products = await prisma.products.findMany({
           where: {
             category: {
-              name: {
-                in: Array.isArray(category) ? category : [category],
-              },
+              name: category, // Filter by category name directly
             },
             isDeleted: false,
           },
@@ -107,13 +108,15 @@ module.exports = {
             ratings: true,
           },
         });
-      } else if (req.query.filter) {
+      }
+      // Check if a sort filter is provided
+      else if (req.query.filter) {
         const { filter } = req.query;
         const filterOptions = {
           populer: { orderBy: { ratings: { _avg: "desc" } } },
           terbaru: { orderBy: { createdAt: "desc" } },
         };
-        product = await prisma.products.findMany({
+        products = await prisma.products.findMany({
           ...filterOptions[filter],
           where: {
             isDeleted: false,
@@ -123,9 +126,11 @@ module.exports = {
             ratings: true,
           },
         });
-      } else if (req.query.page && req.query.limit) {
+      }
+      // Check if pagination is needed
+      else if (req.query.page && req.query.limit) {
         const { page = 1, limit = 10 } = req.query;
-        product = await prisma.products.findMany({
+        products = await prisma.products.findMany({
           where: { isDeleted: false },
           skip: (Number(page) - 1) * Number(limit),
           take: Number(limit),
@@ -134,8 +139,10 @@ module.exports = {
             ratings: true,
           },
         });
-      } else {
-        product = await prisma.products.findMany({
+      }
+      // Default case: no filters applied
+      else {
+        products = await prisma.products.findMany({
           where: { isDeleted: false },
           include: {
             category: true,
@@ -144,8 +151,8 @@ module.exports = {
         });
       }
 
-      // Kalkulasi averageRating untuk setiap produk
-      product.forEach((product) => {
+      // Calculate averageRating for each product
+      products.forEach((product) => {
         product.averageRating =
           product.ratings.reduce((sum, rating) => sum + rating.rating, 0) /
             product.ratings.length || 0;
@@ -154,7 +161,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         message: "Get all products successfully",
-        data: product,
+        data: products,
       });
     } catch (error) {
       next(error);
