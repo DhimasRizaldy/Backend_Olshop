@@ -294,7 +294,20 @@ module.exports = {
         },
         include: {
           category: true,
-          ratings: true,
+          ratings: {
+            include: {
+              users: {
+                select: {
+                  username: true, // Only select the username
+                },
+              },
+              products: {
+                select: {
+                  name: true, // Only select the name
+                },
+              },
+            },
+          },
         },
       });
 
