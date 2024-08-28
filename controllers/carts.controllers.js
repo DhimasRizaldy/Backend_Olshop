@@ -63,7 +63,7 @@ module.exports = {
     try {
       const userId = req.user?.userId;
 
-      // Validasi jika userId tidak ada
+      // Validate if userId is missing
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -71,26 +71,34 @@ module.exports = {
         });
       }
 
-      // Mengambil semua carts milik user
+      // Fetch all carts belonging to the user, including product details
       let carts = await prisma.carts.findMany({
         where: {
           userId: userId,
         },
+        include: {
+          products: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
+        },
       });
 
-      // Mengirimkan response dengan data carts
+      // Send response with cart data
       res.status(200).json({
         success: true,
         message: "Successfully retrieved carts",
         data: carts,
       });
     } catch (error) {
-      console.error(error); // Log error untuk debugging
+      console.error(error); // Log error for debugging
       res.status(500).json({
         success: false,
         message: "An error occurred while retrieving carts",
       });
-      next(error); // Panggil middleware berikutnya untuk penanganan error
+      next(error); // Call the next middleware for error handling
     }
   },
 
