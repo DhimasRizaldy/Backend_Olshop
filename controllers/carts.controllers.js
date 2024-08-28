@@ -81,6 +81,8 @@ module.exports = {
             select: {
               name: true,
               image: true,
+              price: true,
+              stock: true,
             },
           },
         },
