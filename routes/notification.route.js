@@ -12,8 +12,8 @@ const verifyToken = require("../middlewares/verifyToken");
 
 // router notification
 router.post("/", verifyToken, verifyAdmin, createNotification);
-router.get("/", verifyToken, getAllNotifications);
-router.get("/all:", verifyToken, getMyNotifications);
+router.get("/", verifyToken, verifyAdmin, getAllNotifications);
+router.get("/all", verifyToken, getMyNotifications);
 router.put("/:notificationId", verifyToken, updateMyNotifications);
 router.delete("/:notificationId", verifyToken, deleteMyNotifications);
 

@@ -60,16 +60,28 @@ module.exports = {
   // get my notifications
   getMyNotifications: async (req, res, next) => {
     try {
+      const userId = req.user.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: false,
+          message: "User ID is missing",
+          err: null,
+          data: null,
+        });
+      }
+
       const notifications = await prisma.notifications.findMany({
         where: {
-          userId: req.user.userId,
+          userId: userId,
           isDeleted: false,
         },
         orderBy: { createdAt: "desc" },
       });
+
       return res.status(200).json({
         status: true,
-        message: "Get my notifications successfully",
+        message: "Notifications retrieved successfully",
         err: null,
         data: notifications,
       });
