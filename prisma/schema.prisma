@@ -108,6 +108,7 @@ model Carts {
   userId      String
   productId   String
   qty         Int
+  isCheckout  Boolean        @default(false)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   products    Products       @relation(fields: [productId], references: [productId])
@@ -132,7 +133,8 @@ model Transactions {
   cartId           String
   promoId          String?
   addressId        String
-  discount         Int       @default(0)
+  discount         Int?       @default(0)
+  ongkirValue      Int?       @default(0)
   total            Int
   status_payment   String
   payment_type     String?

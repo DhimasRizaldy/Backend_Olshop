@@ -5,14 +5,9 @@ module.exports = {
   // create carts
   createCarts: async (req, res, next) => {
     try {
-      let { qty, productId } = req.body;
-      if (!qty || !Number.isInteger(qty) || qty <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid quantity",
-        });
-      }
+      let { qty = 1, productId } = req.body; // Set default qty to 1
 
+      // Validate productId
       if (!productId) {
         return res.status(400).json({
           success: false,
@@ -20,9 +15,18 @@ module.exports = {
         });
       }
 
+      // Validate that qty is a positive integer
+      if (!Number.isInteger(qty) || qty <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid quantity",
+        });
+      }
+
       const cartId = uuidv4();
       const userId = req.user.userId;
 
+      // Validate userId
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -71,10 +75,11 @@ module.exports = {
         });
       }
 
-      // Fetch all carts belonging to the user, including product details
+      // Fetch all carts belonging to the user that are not checked out, including product details
       let carts = await prisma.carts.findMany({
         where: {
           userId: userId,
+          isCheckout: false, // Add this condition to filter out checked out carts
         },
         include: {
           products: {
@@ -109,9 +114,9 @@ module.exports = {
     try {
       let { cartId } = req.params;
       let usersId = req.user.userId;
-      let { productId, qty } = req.body;
+      let { qty } = req.body;
 
-      // Validasi input
+      // Validate input
       if (!cartId) {
         return res.status(400).json({
           success: false,
@@ -119,14 +124,14 @@ module.exports = {
         });
       }
 
-      if (!productId || qty === undefined || qty < 0) {
+      if (qty === undefined || qty < 0) {
         return res.status(400).json({
           success: false,
-          message: "Product ID and quantity are required",
+          message: "Quantity is required and must be non-negative",
         });
       }
 
-      // Temukan pengguna berdasarkan ID
+      // Find user
       let user = await prisma.users.findUnique({
         where: {
           userId: usersId,
@@ -142,7 +147,7 @@ module.exports = {
         });
       }
 
-      // Temukan keranjang berdasarkan ID
+      // Find cart
       let findCarts = await prisma.carts.findUnique({
         where: {
           cartId: cartId,
@@ -158,14 +163,14 @@ module.exports = {
         });
       }
 
-      // Perbarui keranjang
+      // Update cart
       let updateCarts = await prisma.carts.update({
         where: {
           cartId: cartId,
         },
         data: {
-          productId,
           qty,
+          // Avoid updating productId if it's not required; update only qty
         },
       });
 
@@ -179,6 +184,7 @@ module.exports = {
       res.status(500).json({
         success: false,
         message: "An error occurred while updating the cart",
+        err: error.message,
       });
       next(error); // Call the next middleware to handle the error if necessary
     }
@@ -187,11 +193,11 @@ module.exports = {
   // delete Carts
   deleteCarts: async (req, res, next) => {
     try {
-      let { cartId } = req.params;
       let userId = req.user.userId;
+      let { cartId } = req.params;
 
       // Temukan pengguna berdasarkan ID
-      let user = await prisma.user.findUnique({
+      let user = await prisma.users.findUnique({
         where: {
           userId: userId,
         },

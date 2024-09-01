@@ -7,6 +7,6 @@ const verifyToken = require("../middlewares/verifyToken");
 
 // route payment
 router.post("/checkout", verifyToken, checkout);
-router.post("/notification", notification);
+router.post("/notification", verifyToken, notification);
 
 module.exports = router;

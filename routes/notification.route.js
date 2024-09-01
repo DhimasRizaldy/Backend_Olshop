@@ -6,6 +6,7 @@ const {
   getAllNotifications,
   getMyNotifications,
   updateMyNotifications,
+  getNotificationsById,
 } = require("../controllers/notifications.controllers");
 const verifyAdmin = require("../middlewares/verifyAdmin");
 const verifyToken = require("../middlewares/verifyToken");
@@ -14,6 +15,7 @@ const verifyToken = require("../middlewares/verifyToken");
 router.post("/", verifyToken, verifyAdmin, createNotification);
 router.get("/", verifyToken, verifyAdmin, getAllNotifications);
 router.get("/all", verifyToken, getMyNotifications);
+router.get("/:notificationId", verifyToken, getNotificationsById);
 router.put("/:notificationId", verifyToken, updateMyNotifications);
 router.delete("/:notificationId", verifyToken, deleteMyNotifications);
 

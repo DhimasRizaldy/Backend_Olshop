@@ -94,12 +94,16 @@ module.exports = {
   updateMyNotifications: async (req, res, next) => {
     try {
       const { notificationId } = req.params;
+
+      // Cari notifikasi yang sesuai dengan notificationId dan userId
       const notification = await prisma.notifications.findUnique({
         where: {
-          AND: [{ notificationId }, { userId: req.user.userId }],
+          notificationId: notificationId,
         },
       });
-      if (!notification) {
+
+      // Cek apakah notifikasi ditemukan dan milik user yang sedang login
+      if (!notification || notification.userId !== req.user.userId) {
         return res.status(404).json({
           status: false,
           message: "Notification not found",
@@ -108,9 +112,10 @@ module.exports = {
         });
       }
 
+      // Update isRead menjadi true
       const updatedNotification = await prisma.notifications.update({
         where: {
-          AND: [{ notificationId }, { userId: req.user.userId }],
+          notificationId: notificationId,
         },
         data: {
           isRead: true,
@@ -166,6 +171,36 @@ module.exports = {
         message: "Notification deleted successfully",
         err: null,
         data: deletedNotification,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // get detail notifications
+  getNotificationsById: async (req, res, next) => {
+    try {
+      const userId = req.user.userId;
+      const { notificationId } = req.params;
+      const notification = await prisma.notifications.findUnique({
+        where: {
+          notificationId: notificationId,
+        },
+      });
+      if (!notification) {
+        return res.status(404).json({
+          status: false,
+          message: "Notification not found",
+          err: null,
+          data: null,
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Notification retrieved successfully",
+        err: null,
+        data: notification,
       });
     } catch (error) {
       next(error);
