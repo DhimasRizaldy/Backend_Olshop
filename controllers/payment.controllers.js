@@ -13,43 +13,19 @@ module.exports = {
   // create transaction
   checkout: async (req, res, next) => {
     try {
-      // Mengambil data dari body permintaan
       const { userId } = req.user;
       const { cartId, promoId, addressId, ongkirValue } = req.body;
       const { username, email, phoneNumber } = req.user;
 
-      // Membuat ID untuk transaksi baru
+      // Periksa apakah cartId ada dan valid
+      if (!Array.isArray(cartId) || cartId.length === 0) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid or missing cartId",
+        });
+      }
+
       const transactionId = uuidv4();
-
-      // Memperbarui stok produk sesuai dengan transaksi
-      const updateProductStock = async (cart) => {
-        const { productId, qty } = cart;
-        const product = await prisma.products.findUnique({
-          where: {
-            productId: productId,
-          },
-        });
-
-        const newStock = product.stock - qty;
-        if (newStock < 0) {
-          throw new Error("Insufficient stock");
-        }
-
-        await prisma.products.update({
-          where: {
-            productId: productId,
-          },
-          data: {
-            stock: newStock,
-          },
-        });
-      };
-
-      const updateProductStocks = async (carts) => {
-        for (const cart of carts) {
-          await updateProductStock(cart);
-        }
-      };
 
       // Mendapatkan data keranjang berdasarkan cartId
       const carts = await prisma.carts.findMany({
@@ -60,11 +36,14 @@ module.exports = {
         },
       });
 
-      await prisma.$transaction(async (prisma) => {
-        await updateProductStocks(carts);
-      });
+      if (carts.length === 0) {
+        return res.status(404).json({
+          status: false,
+          message: "No carts found",
+        });
+      }
 
-      // Menghitung total harga
+      // Hitung total harga
       let total = carts.reduce((total, cart) => {
         return total + cart.price * cart.qty;
       }, 0);
@@ -91,31 +70,27 @@ module.exports = {
           });
         }
 
-        if (promo.expiresAt > new Date()) {
-          discount = total * (promo.discount / 100);
-        }
+        discount = total * (promo.discount / 100);
       }
 
       total -= discount;
-      total += ongkirValue; // Menambahkan ongkir ke total
+      total += ongkirValue;
 
-      // Membuat transaksi di database
       const transaction = await prisma.transactions.create({
         data: {
           transactionId,
           userId,
-          cartId: cartId.join(","), // Menyimpan cartId sebagai string jika banyak
+          cartId: cartId.join(","), // Menyimpan cartId sebagai string
           promoId,
           addressId,
           discount,
-          ongkirValue, // Menyimpan nilai ongkir
+          ongkirValue,
           total,
           status_payment: "Pending",
-          payment_type: null, // Menetapkan null sementara
+          payment_type: null,
         },
       });
 
-      // Menghasilkan token dan URL pembayaran Midtrans
       const midtransTransaction = await snap.createTransaction({
         transaction_details: {
           order_id: transactionId,
@@ -126,7 +101,6 @@ module.exports = {
           email,
           phone: phoneNumber,
         },
-        // Anda dapat menambahkan lebih banyak konfigurasi di sini
       });
 
       return res.status(200).json({
@@ -134,11 +108,12 @@ module.exports = {
         message: "Transaction created successfully",
         data: {
           ...transaction,
-          paymentUrl: midtransTransaction.redirect_url, // URL pembayaran
-          token: midtransTransaction.token, // Token pembayaran
+          paymentUrl: midtransTransaction.redirect_url,
+          token: midtransTransaction.token,
         },
       });
     } catch (error) {
+      console.error("Checkout error:", error); // Log error untuk debugging
       next(error);
     }
   },
