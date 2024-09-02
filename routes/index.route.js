@@ -26,5 +26,7 @@ router.use("/transaction", require("./transactions.route"));
 router.use("/ratings", require("./ratings.route"));
 // payment route
 router.use("/payment", require("./payment.route"));
+// rajaongkir route
+router.use("/rajaongkir", require("./rajaongkir.route"));
 
 module.exports = router;
