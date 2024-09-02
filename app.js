@@ -11,20 +11,25 @@ const { serverError, notFound } = require("./middlewares/errorHandling");
 const PORT = process.env.PORT || 3000;
 
 // cors
-app.use(
-  cors({
-    origin: "*",
-  })
-);
+// app.use(
+//   cors({
+//     origin: "*",
+//   })
+// );
+app.use(cors());
 
 // json
 app.use(express.json());
 
 // urlEncoded
 app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 // morgan (logger)
 app.use(morgan("dev"));
+
+// path
+app.use(express.static(path.join(__dirname, "public")));
 
 // api docs
 const file = fs.readFileSync(path.join(__dirname, "./docs.yaml"), "utf8");
