@@ -58,10 +58,10 @@ module.exports = {
   // get detail transaction
   getDetailTransaction: async (req, res, next) => {
     try {
-      // Mendapatkan ID transaksi dari permintaan
-      const { transactionId } = req.params;
+      const userId = req.user.userId; // Mengambil ID pengguna dari request (misalnya dari middleware autentikasi)
+      const { transactionId } = req.params; // Mendapatkan ID transaksi dari parameter request
 
-      // Mengambil detail transaksi berdasarkan ID transaksi
+      // Mendapatkan detail transaksi berdasarkan ID transaksi
       const transaction = await prisma.transactions.findUnique({
         where: {
           transactionId: transactionId,
@@ -71,12 +71,27 @@ module.exports = {
           promo: true, // Sertakan detail promo jika ada
           carts: {
             include: {
-              products: true, // Sertakan detail produk dalam keranjang (corrected field name)
+              products: true, // Sertakan detail produk dalam keranjang
             },
           },
           users: true, // Sertakan detail pengguna
         },
       });
+
+      if (!transaction) {
+        return res.status(404).json({
+          success: false,
+          message: "Transaction not found",
+        });
+      }
+
+      // Opsional: Memastikan user yang meminta transaksi memiliki akses ke transaksi tersebut
+      if (transaction.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied",
+        });
+      }
 
       // Mengirimkan respons dengan detail transaksi
       return res.status(200).json({
@@ -98,20 +113,53 @@ module.exports = {
   // update transaction
   updateTransaction: async (req, res, next) => {
     try {
-      // Mendapatkan ID transaksi dari permintaan
+      const userId = req.user.userId;
       const { transactionId } = req.params;
 
+      if (!transactionId) {
+        return res.status(400).json({
+          success: false,
+          message: "Transaction ID is required",
+        });
+      }
+
       // Mendapatkan data yang ingin diperbarui dari body permintaan
-      const { status_payment, shippingStatus } = req.body;
+      const { status_payment, shippingStatus, receiptDelivery } = req.body;
+
+      // Memverifikasi bahwa data yang diterima valid
+      if (!status_payment || !shippingStatus || !receiptDelivery) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+
+      // Mendapatkan transaksi untuk memverifikasi apakah transaksi ini milik pengguna
+      const transaction = await prisma.transactions.findUnique({
+        where: { transactionId: transactionId },
+      });
+
+      if (!transaction) {
+        return res.status(404).json({
+          success: false,
+          message: "Transaction not found",
+        });
+      }
+
+      if (transaction.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized to update this transaction",
+        });
+      }
 
       // Memperbarui transaksi dengan menggunakan fungsi update dari Prisma
       const updatedTransaction = await prisma.transactions.update({
-        where: {
-          transactionId: transactionId,
-        },
+        where: { transactionId: transactionId },
         data: {
           status_payment: status_payment,
           shippingStatus: shippingStatus,
+          receiptDelivery: receiptDelivery,
         },
       });
 
@@ -123,7 +171,12 @@ module.exports = {
       });
     } catch (error) {
       // Menangani kesalahan jika terjadi
-      next(error);
+      console.error("Error updating transaction:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update transaction",
+        error: error.message,
+      });
     }
   },
 
