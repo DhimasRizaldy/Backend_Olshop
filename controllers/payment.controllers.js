@@ -14,24 +14,24 @@ module.exports = {
   checkout: async (req, res, next) => {
     try {
       const { userId } = req.user;
-      const { cartId, promoId, addressId, ongkirValue, courier } = req.body; // Menangkap courier dari request body
+      const { cartIds, promoId, addressId, ongkirValue, courier } = req.body; // Menggunakan cartIds
       const { username, email, phoneNumber } = req.user;
 
-      // Periksa apakah cartId ada dan valid
-      if (!Array.isArray(cartId) || cartId.length === 0) {
+      // Periksa apakah cartIds ada dan valid
+      if (!Array.isArray(cartIds) || cartIds.length === 0) {
         return res.status(400).json({
           status: false,
-          message: "Invalid or missing cartId",
+          message: "Invalid or missing cartIds",
         });
       }
 
       const transactionId = uuidv4();
 
-      // Mendapatkan data keranjang berdasarkan cartId
+      // Mendapatkan data keranjang berdasarkan cartIds
       const carts = await prisma.carts.findMany({
         where: {
           cartId: {
-            in: cartId,
+            in: cartIds,
           },
         },
         include: {
@@ -130,7 +130,7 @@ module.exports = {
         data: {
           transactionId,
           userId,
-          cartId: cartId.join(","), // Menyimpan cartId sebagai string
+          cartIds, // Menggunakan cartIds sebagai array
           promoId,
           addressId,
           discount,
@@ -159,7 +159,7 @@ module.exports = {
       await prisma.carts.updateMany({
         where: {
           cartId: {
-            in: cartId,
+            in: cartIds,
           },
         },
         data: {

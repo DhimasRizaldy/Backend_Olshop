@@ -113,7 +113,7 @@ model Carts {
   updatedAt   DateTime       @updatedAt
   products    Products       @relation(fields: [productId], references: [productId])
   users       Users          @relation(fields: [userId], references: [userId])
-  transctions Transactions[]
+  transactions Transactions[] @relation("TransactionCarts")
 }
 
 model Promo {
@@ -130,7 +130,7 @@ model Promo {
 model Transactions {
   transactionId    String    @id @default(uuid())
   userId           String
-  cartId           String
+  cartIds          String[]
   promoId          String?
   addressId        String
   discount         Int?       @default(0)
@@ -145,7 +145,7 @@ model Transactions {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   address          Address   @relation(fields: [addressId], references: [addressId])
-  carts            Carts     @relation(fields: [cartId], references: [cartId])
+  carts            Carts[]   @relation("TransactionCarts")
   promo            Promo?    @relation(fields: [promoId], references: [promoId])
   users            Users     @relation(fields: [userId], references: [userId])
 }
