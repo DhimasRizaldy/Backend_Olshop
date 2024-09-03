@@ -15,7 +15,7 @@ const verifyAdmin = require("../middlewares/verifyAdmin");
 router.get("/", verifyToken, verifyAdmin, getAllTransaction);
 router.get("/me", verifyToken, getAllTransactionMe);
 router.get("/:transactionId", verifyToken, getDetailTransaction);
-router.put("/:transactionId", verifyAdmin, updateTransaction);
+router.put("/:transactionId", verifyToken, verifyAdmin, updateTransaction); 
 router.delete("/:transactionId", verifyToken, deleteTransaction);
 
 module.exports = router;

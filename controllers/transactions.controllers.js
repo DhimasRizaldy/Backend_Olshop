@@ -116,6 +116,7 @@ module.exports = {
       const userId = req.user.userId;
       const { transactionId } = req.params;
 
+      // Memverifikasi bahwa transactionId disediakan
       if (!transactionId) {
         return res.status(400).json({
           success: false,
@@ -134,7 +135,20 @@ module.exports = {
         });
       }
 
-      // Mendapatkan transaksi untuk memverifikasi apakah transaksi ini milik pengguna
+      // Memeriksa apakah pengguna memiliki peran admin
+      const user = await prisma.users.findUnique({
+        where: { userId: userId },
+        select: { role: true }, // Pastikan role pengguna diambil
+      });
+
+      if (user.role !== "ADMIN") {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized: Admin role required",
+        });
+      }
+
+      // Mendapatkan transaksi untuk memverifikasi apakah transaksi ini ada
       const transaction = await prisma.transactions.findUnique({
         where: { transactionId: transactionId },
       });
@@ -143,13 +157,6 @@ module.exports = {
         return res.status(404).json({
           success: false,
           message: "Transaction not found",
-        });
-      }
-
-      if (transaction.userId !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized to update this transaction",
         });
       }
 
