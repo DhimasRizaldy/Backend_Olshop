@@ -74,7 +74,6 @@ module.exports = {
   // gets all products
   getAllProduct: async (req, res, next) => {
     try {
-      let products;
       const {
         search,
         category,
@@ -91,6 +90,9 @@ module.exports = {
         include: {
           category: true,
           ratings: true,
+          carts: {
+            where: { isCheckout: true }, // Hanya hitung yang sudah di-checkout
+          },
         },
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
@@ -121,33 +123,41 @@ module.exports = {
       }
 
       // Fetch products
-      products = await prisma.products.findMany(baseQuery);
+      const products = await prisma.products.findMany(baseQuery);
 
-      // Calculate averageRating and apply rating filters
-      products = products.map((product) => {
+      // Calculate averageRating, totalSold, and totalReview
+      const productsWithStats = products.map((product) => {
         const averageRating =
           product.ratings.reduce((sum, rating) => sum + rating.rating, 0) /
             product.ratings.length || 0;
+
+        const totalSold = product.carts.reduce(
+          (total, cart) => total + cart.qty,
+          0
+        );
+
+        const totalReview = product.ratings.length;
+
         return {
           ...product,
           averageRating,
+          totalSold,
+          totalReview,
         };
       });
 
       // Apply rating filters if provided
-      if (minRating || maxRating) {
-        products = products.filter((product) => {
-          return (
-            (!minRating || product.averageRating >= minRating) &&
-            (!maxRating || product.averageRating <= maxRating)
-          );
-        });
-      }
+      const filteredProducts = productsWithStats.filter((product) => {
+        return (
+          (!minRating || product.averageRating >= minRating) &&
+          (!maxRating || product.averageRating <= maxRating)
+        );
+      });
 
       return res.status(200).json({
         success: true,
         message: "Get all products successfully",
-        data: products,
+        data: filteredProducts,
       });
     } catch (error) {
       next(error);
@@ -288,6 +298,7 @@ module.exports = {
   getDetailProduct: async (req, res, next) => {
     try {
       const productId = req.params.productId;
+
       const product = await prisma.products.findUnique({
         where: {
           productId: productId,
@@ -298,20 +309,23 @@ module.exports = {
             include: {
               users: {
                 select: {
-                  username: true, // Only select the username
+                  username: true, // Hanya pilih username
                 },
               },
               products: {
                 select: {
-                  name: true, // Only select the name
+                  name: true, // Hanya pilih nama produk
                 },
               },
             },
           },
+          carts: {
+            where: { isCheckout: true }, // Hanya hitung yang sudah di-checkout
+          },
         },
       });
 
-      // kondisi jika product tidak ditemukan
+      // Kondisi jika produk tidak ditemukan
       if (!product) {
         return res.status(404).json({
           success: false,
@@ -321,11 +335,24 @@ module.exports = {
         });
       }
 
-      // result jika product ditemukan
+      // Hitung totalSold
+      const totalSold = product.carts.reduce(
+        (total, cart) => total + cart.qty,
+        0
+      );
+
+      // Hitung totalReview
+      const totalReview = product.ratings.length;
+
+      // Hasil jika produk ditemukan, termasuk totalSold dan totalReview
       res.status(200).json({
         success: true,
         message: "Get product successfully",
-        data: product,
+        data: {
+          ...product,
+          totalSold, // Tambahkan totalSold ke dalam data produk
+          totalReview, // Tambahkan totalReview ke dalam data produk
+        },
       });
     } catch (error) {
       next(error);
