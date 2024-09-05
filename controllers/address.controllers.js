@@ -40,12 +40,22 @@ module.exports = {
   getAllAddress: async (req, res, next) => {
     try {
       const userId = req.user.userId;
+      const userRole = req.user.role; // Assuming role is set in req.user when the user is authenticated
 
-      const addresses = await prisma.address.findMany({
-        where: {
-          userId: userId,
-        },
-      });
+      let addresses;
+
+      // Check if the user is an ADMIN
+      if (userRole === "ADMIN") {
+        // If ADMIN, retrieve all addresses
+        addresses = await prisma.address.findMany();
+      } else {
+        // If not ADMIN, retrieve only the addresses associated with the user
+        addresses = await prisma.address.findMany({
+          where: {
+            userId: userId,
+          },
+        });
+      }
 
       res.status(200).json({
         success: true,
@@ -58,7 +68,7 @@ module.exports = {
         success: false,
         message: "An error occurred while retrieving addresses",
       });
-      next(error); // Panggil middleware berikutnya untuk penanganan error
+      next(error); // Call next middleware for error handling
     }
   },
 
@@ -193,16 +203,17 @@ module.exports = {
   getDetailAddress: async (req, res, next) => {
     try {
       const userId = req.user.userId;
+      const userRole = req.user.role; // Assuming role is set in req.user when the user is authenticated
       const addressId = req.params.addressId;
 
-      // Inisialisasi user sesuai dengan alamat
+      // Find the user
       const user = await prisma.users.findUnique({
         where: {
           userId: userId,
         },
       });
 
-      // Pengecekan ketersediaan user
+      // Check if the user exists
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -212,25 +223,25 @@ module.exports = {
         });
       }
 
-      // Dapatkan detail alamat
+      // Get the address details
       const address = await prisma.address.findUnique({
         where: {
           addressId: addressId,
         },
       });
 
-      // Pengecekan ketersediaan alamat
+      // Check if the address exists
       if (!address) {
         return res.status(404).json({
           success: false,
-          message: "Address not found by id : " + addressId,
+          message: "Address not found by id: " + addressId,
           err: null,
           data: null,
         });
       }
 
-      // Pengecekan relasi antara alamat dan pengguna
-      if (address.userId !== userId) {
+      // Check if the user is authorized to view the address
+      if (userRole !== "ADMIN" && address.userId !== userId) {
         return res.status(403).json({
           success: false,
           message: "You are not authorized to view this address",
@@ -239,10 +250,10 @@ module.exports = {
         });
       }
 
-      // Respons jika data alamat ditemukan
+      // Respond with the address details
       return res.status(200).json({
         success: true,
-        message: "Successfully get detail address",
+        message: "Successfully retrieved address details",
         err: null,
         data: address,
       });

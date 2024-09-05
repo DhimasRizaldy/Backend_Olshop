@@ -991,16 +991,40 @@ module.exports = {
   // get users by id
   getUsersById: async (req, res, next) => {
     try {
-      const { userId } = req.params;
+      const { userId: requestedUserId } = req.params;
+      const { userId: currentUserId, role } = req.user; // Extract current user ID and role from the request
+
+      // Check if the current user is an admin
+      if (role !== "ADMIN" && requestedUserId !== currentUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorized to view this user",
+          data: null,
+        });
+      }
+
+      // Find the requested user
       const user = await prisma.users.findUnique({
-        where: { userId },
+        where: { userId: requestedUserId },
       });
+
+      // Check if the user exists
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+          data: null,
+        });
+      }
+
+      // Respond with the user details
       return res.status(200).json({
         success: true,
         message: "Get user by id successfully",
-        data: { ...user, token },
+        data: user,
       });
     } catch (error) {
+      console.error(error); // Log error to console for debugging
       next(error);
     }
   },
