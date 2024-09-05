@@ -59,6 +59,7 @@ module.exports = {
   getDetailTransaction: async (req, res, next) => {
     try {
       const userId = req.user.userId; // Mengambil ID pengguna dari request (misalnya dari middleware autentikasi)
+      const userRole = req.user.role; // Mengambil role pengguna dari request (misalnya dari middleware autentikasi)
       const { transactionId } = req.params; // Mendapatkan ID transaksi dari parameter request
 
       // Mendapatkan detail transaksi berdasarkan ID transaksi
@@ -85,8 +86,9 @@ module.exports = {
         });
       }
 
-      // Opsional: Memastikan user yang meminta transaksi memiliki akses ke transaksi tersebut
-      if (transaction.userId !== userId) {
+      // Memastikan user yang meminta transaksi memiliki akses ke transaksi tersebut
+      // Admin bisa mengakses semua transaksi, user biasa hanya bisa mengakses transaksi miliknya
+      if (transaction.userId !== userId && userRole !== "ADMIN") {
         return res.status(403).json({
           success: false,
           message: "Access denied",
