@@ -70,12 +70,18 @@ module.exports = {
         include: {
           address: true, // Sertakan detail alamat pengiriman
           promo: true, // Sertakan detail promo jika ada
-          carts: {
-            include: {
-              products: true, // Sertakan detail produk dalam keranjang
+          users: {
+            select: {
+              userId: true, // Ambil userId
+              username: true, // Ambil nama pengguna
+              email: true, // Ambil email pengguna
+              profiles: {
+                select: {
+                  phoneNumber: true, // Ambil nomor telepon dari profil
+                },
+              },
             },
           },
-          users: true, // Sertakan detail pengguna
         },
       });
 
@@ -87,7 +93,6 @@ module.exports = {
       }
 
       // Memastikan user yang meminta transaksi memiliki akses ke transaksi tersebut
-      // Admin bisa mengakses semua transaksi, user biasa hanya bisa mengakses transaksi miliknya
       if (transaction.userId !== userId && userRole !== "ADMIN") {
         return res.status(403).json({
           success: false,
@@ -95,11 +100,55 @@ module.exports = {
         });
       }
 
-      // Mengirimkan respons dengan detail transaksi
+      // Ambil detail carts berdasarkan cartIds yang ada di transaksi
+      const carts = await prisma.carts.findMany({
+        where: {
+          cartId: { in: transaction.cartIds }, // Filter berdasarkan cartIds yang ada di transaksi
+        },
+        include: {
+          products: true, // Sertakan detail produk
+        },
+      });
+
+      // Memetakan produk dalam cart untuk mendapatkan nama, harga, kuantitas, dan gambar produk
+      const cartDetails = carts.map((cart) => {
+        return {
+          productName: cart.products.name, // Nama produk
+          productPrice: cart.products.price, // Harga produk
+          productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
+          productImage: cart.products.image, // Gambar produk
+          totalPricePerProduct: cart.products.price * cart.qty, // Total harga per produk
+        };
+      });
+
+      // Mengirimkan respons dengan detail transaksi lengkap dan produk dalam cart
       return res.status(200).json({
         success: true,
         message: "Get transaction detail successfully",
-        data: transaction,
+        data: {
+          transactionId: transaction.transactionId,
+          userId: transaction.users.userId,
+          discount: transaction.discount,
+          ongkirValue: transaction.ongkirValue,
+          total: transaction.total,
+          status_payment: transaction.status_payment,
+          payment_type: transaction.payment_type,
+          transaction_time: transaction.transaction_time,
+          courier: transaction.courier,
+          receiptDelivery: transaction.receiptDelivery,
+          shippingStatus: transaction.shippingStatus,
+          paymentUrl: transaction.paymentUrl,
+          token: transaction.token,
+          address: transaction.address,
+          promo: transaction.promo,
+          user: {
+            userId: transaction.users.userId,
+            username: transaction.users.username,
+            email: transaction.users.email,
+            phoneNumber: transaction.users.profiles.phoneNumber, // Nomor telepon dari profil pengguna
+          },
+          cartDetails, // Detail produk dalam cart
+        },
       });
     } catch (error) {
       // Menangani kesalahan jika terjadi
