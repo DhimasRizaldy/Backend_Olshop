@@ -40,22 +40,14 @@ module.exports = {
   getAllAddress: async (req, res, next) => {
     try {
       const userId = req.user.userId;
-      const userRole = req.user.role; // Assuming role is set in req.user when the user is authenticated
 
       let addresses;
 
-      // Check if the user is an ADMIN
-      if (userRole === "ADMIN") {
-        // If ADMIN, retrieve all addresses
-        addresses = await prisma.address.findMany();
-      } else {
-        // If not ADMIN, retrieve only the addresses associated with the user
-        addresses = await prisma.address.findMany({
-          where: {
-            userId: userId,
-          },
-        });
-      }
+      addresses = await prisma.address.findMany({
+        where: {
+          userId: userId,
+        },
+      });
 
       res.status(200).json({
         success: true,

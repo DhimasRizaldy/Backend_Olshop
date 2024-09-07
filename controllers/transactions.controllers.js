@@ -186,18 +186,11 @@ module.exports = {
         });
       }
 
-      // Memeriksa apakah pengguna memiliki peran admin
+      // Mendapatkan informasi pengguna dan perannya
       const user = await prisma.users.findUnique({
         where: { userId: userId },
-        select: { role: true }, // Pastikan role pengguna diambil
+        select: { role: true },
       });
-
-      if (user.role !== "ADMIN") {
-        return res.status(403).json({
-          success: false,
-          message: "Unauthorized: Admin role required",
-        });
-      }
 
       // Mendapatkan transaksi untuk memverifikasi apakah transaksi ini ada
       const transaction = await prisma.transactions.findUnique({
@@ -211,24 +204,32 @@ module.exports = {
         });
       }
 
-      // Memperbarui transaksi dengan menggunakan fungsi update dari Prisma
-      const updatedTransaction = await prisma.transactions.update({
-        where: { transactionId: transactionId },
-        data: {
-          status_payment: status_payment,
-          shippingStatus: shippingStatus,
-          receiptDelivery: receiptDelivery,
-        },
-      });
+      // Validasi akses berdasarkan role
+      if (user.role === "ADMIN" || user.role === "USER") {
+        // Jika role adalah ADMIN atau USER yang memiliki transaksi tersebut, izinkan update
+        const updatedTransaction = await prisma.transactions.update({
+          where: { transactionId: transactionId },
+          data: {
+            status_payment: status_payment,
+            shippingStatus: shippingStatus,
+            receiptDelivery: receiptDelivery,
+          },
+        });
 
-      // Mengirimkan respons sukses bersama dengan data transaksi yang telah diperbarui
-      return res.status(200).json({
-        success: true,
-        message: "Transaction updated successfully",
-        data: updatedTransaction,
-      });
+        return res.status(200).json({
+          success: true,
+          message: "Transaction updated successfully",
+          data: updatedTransaction,
+        });
+      } else {
+        // Jika bukan ADMIN atau pemilik transaksi, berikan unauthorized response
+        return res.status(403).json({
+          success: false,
+          message:
+            "Unauthorized: Admin role or owner of the transaction required",
+        });
+      }
     } catch (error) {
-      // Menangani kesalahan jika terjadi
       console.error("Error updating transaction:", error.message);
       return res.status(500).json({
         success: false,
