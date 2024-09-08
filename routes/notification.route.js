@@ -10,7 +10,7 @@ const {
 const verifyAdmin = require("../middlewares/verifyAdmin");
 const verifyToken = require("../middlewares/verifyToken");
 const crypto = require("crypto");
-const prisma = require("../prismaClient"); // Sesuaikan dengan path prisma Anda
+const prisma = require("../libs/prisma");
 const { v4: uuidv4 } = require("uuid");
 
 // Fungsi untuk memverifikasi signature key dari Midtrans
