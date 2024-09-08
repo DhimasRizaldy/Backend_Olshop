@@ -150,6 +150,7 @@ model Transactions {
   carts            Carts[]   @relation("TransactionCarts")
   promo            Promo?    @relation(fields: [promoId], references: [promoId])
   users            Users     @relation(fields: [userId], references: [userId])
+  notifications    Notifications[] @relation("TransactionNotifications")
 }
 
 model Ratings {
@@ -168,6 +169,7 @@ model Ratings {
 model Notifications {
   notificationId String   @id @default(uuid())
   userId         String
+  transactionId  String?
   title          String
   body           String
   description    String?
@@ -176,6 +178,7 @@ model Notifications {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   users          Users    @relation(fields: [userId], references: [userId])
+  transaction    Transactions? @relation("TransactionNotifications", fields: [transactionId], references: [transactionId])
 }
 
 enum Roles {

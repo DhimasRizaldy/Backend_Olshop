@@ -26,54 +26,41 @@ const verifySignature = (notification) => {
 router.post("/payment-notification", async (req, res) => {
   try {
     const notification = req.body;
+    const {
+      transaction_status,
+      order_id,
+      payment_type,
+      transaction_time,
+      gross_amount,
+    } = notification;
 
-    // Verifikasi signature key
-    if (!verifySignature(notification)) {
-      return res.status(403).json({ message: "Invalid signature" });
-    }
-
-    // Dapatkan status transaksi dari notifikasi
-    const { transaction_status, order_id, transaction_time, payment_type } =
-      notification;
-
-    // Update status transaksi di database
-    if (transaction_status === "settlement") {
-      // Update transaksi sebagai "paid"
-      await prisma.transaction.update({
-        where: { orderId: order_id },
-        data: {
-          status: "paid",
-          paymentType: payment_type,
-          transactionTime: new Date(transaction_time),
-        },
-      });
-    } else if (transaction_status === "expire") {
-      // Update transaksi sebagai "expired"
-      await prisma.transaction.update({
-        where: { orderId: order_id },
-        data: { status: "expired" },
-      });
-    }
-
-    // Kirim notifikasi ke semua pengguna terkait transaksi (opsional)
-    const users = await prisma.users.findMany();
-    const notifications = users.map((user) => ({
-      notificationId: uuidv4(),
-      userId: user.userId,
-      title: "Payment Notification",
-      body: `Your payment status for order ${order_id} is ${transaction_status}`,
-      isRead: false,
-    }));
-
-    await prisma.notifications.createMany({
-      data: notifications,
+    // Update transaksi berdasarkan order_id
+    const transaction = await prisma.transactions.update({
+      where: { token: order_id },
+      data: {
+        status_payment: transaction_status,
+        payment_type: payment_type,
+        transaction_time: new Date(transaction_time),
+      },
     });
 
-    // Respon HTTP 200 ke Midtrans
-    return res.status(200).json({ message: "Notification received" });
+    // Simpan notifikasi terkait transaksi
+    await prisma.notifications.create({
+      data: {
+        userId: transaction.userId,
+        transactionId: transaction.transactionId, // Opsional jika Anda menambahkan relasi ini
+        title: `Payment ${transaction_status}`,
+        body: `Your payment of IDR ${gross_amount} is ${transaction_status}`,
+        description: `Payment via ${payment_type} on ${transaction_time}`,
+      },
+    });
+
+    res
+      .status(200)
+      .json({ message: "Notification received and processed successfully." });
   } catch (error) {
     console.error("Error handling Midtrans notification:", error);
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Failed to process notification." });
   }
 });
 
