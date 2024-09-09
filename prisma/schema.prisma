@@ -96,6 +96,7 @@ model ManageStock {
   supplierId    String
   productId     String
   stockIn       Int?
+  purchasePrice BigInt?
   dateStockIn   DateTime
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

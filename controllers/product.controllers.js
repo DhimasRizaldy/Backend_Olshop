@@ -10,8 +10,8 @@ module.exports = {
       let { price, promoPrice, weight, stock } = req.body;
 
       // Convert to BigInt and handle optional values
-      price = BigInt(parseFloat(price) * 100); // Example conversion
-      promoPrice = promoPrice ? BigInt(parseFloat(promoPrice) * 100) : null;
+      price = BigInt(price); // Assume price is already in the smallest unit (e.g., cents)
+      promoPrice = promoPrice ? BigInt(promoPrice) : null;
       weight = parseFloat(weight);
       stock = parseInt(stock, 10);
 
@@ -57,10 +57,19 @@ module.exports = {
         include: { category: true },
       });
 
+      // Convert BigInt to string for serialization
+      const serializedProduct = {
+        ...newProduct,
+        price: newProduct.price.toString(),
+        promoPrice: newProduct.promoPrice
+          ? newProduct.promoPrice.toString()
+          : null,
+      };
+
       res.status(200).json({
         success: true,
         message: "Product created successfully",
-        data: newProduct,
+        data: serializedProduct,
       });
     } catch (error) {
       next(error);
@@ -117,7 +126,7 @@ module.exports = {
       const products = await prisma.products.findMany(baseQuery);
 
       // Check if products are fetched correctly
-      console.log("Fetched Products:", products);
+      // console.log("Fetched Products:", products);
 
       // Process products
       const productsWithStats = products.map((product) => {
@@ -200,7 +209,7 @@ module.exports = {
       }
 
       // Update product
-      let updateProduct = await prisma.products.update({
+      let updatedProduct = await prisma.products.update({
         where: { productId },
         data: {
           name,
@@ -214,10 +223,19 @@ module.exports = {
         },
       });
 
+      // Convert BigInt to string for serialization
+      updatedProduct = {
+        ...updatedProduct,
+        price: updatedProduct.price.toString(),
+        promoPrice: updatedProduct.promoPrice
+          ? updatedProduct.promoPrice.toString()
+          : null,
+      };
+
       res.status(200).json({
         success: true,
         message: "Product updated successfully",
-        data: updateProduct,
+        data: updatedProduct,
       });
     } catch (error) {
       next(error);
@@ -240,15 +258,24 @@ module.exports = {
         });
       }
 
-      const deleteProduct = await prisma.products.update({
+      const deletedProduct = await prisma.products.update({
         where: { productId },
         data: { isDeleted: true },
       });
 
+      // Convert BigInt to string for serialization
+      const serializedProduct = {
+        ...deletedProduct,
+        price: deletedProduct.price.toString(),
+        promoPrice: deletedProduct.promoPrice
+          ? deletedProduct.promoPrice.toString()
+          : null,
+      };
+
       res.status(200).json({
         success: true,
         message: "Product deleted successfully",
-        data: deleteProduct,
+        data: serializedProduct,
       });
     } catch (error) {
       next(error);

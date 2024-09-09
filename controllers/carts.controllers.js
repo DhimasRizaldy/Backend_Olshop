@@ -93,6 +93,15 @@ module.exports = {
         },
       });
 
+      // Convert BigInt to string for serialization
+      carts = carts.map((cart) => ({
+        ...cart,
+        products: {
+          ...cart.products,
+          price: cart.products.price.toString(),
+        },
+      }));
+
       // Send response with cart data
       res.status(200).json({
         success: true,
@@ -294,6 +303,9 @@ module.exports = {
         where: {
           cartId: cartId,
         },
+        include: {
+          products: true,
+        },
       });
 
       // Kondisi jika carts tidak ditemukan
@@ -315,6 +327,15 @@ module.exports = {
           data: null,
         });
       }
+
+      // Convert BigInt to string for serialization
+      cart = {
+        ...cart,
+        products: {
+          ...cart.products,
+          price: cart.products.price.toString(),
+        },
+      };
 
       // Mengirim detail cart jika ditemukan dan sesuai dengan user
       res.status(200).json({

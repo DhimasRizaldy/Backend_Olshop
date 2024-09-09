@@ -5,7 +5,7 @@ module.exports = {
   // create manageStok
   createManageStock: async (req, res, next) => {
     try {
-      const { supplierId, productId, stockIn } = req.body;
+      const { supplierId, productId, stockIn, purchasePrice } = req.body;
       const manageStockId = uuidv4();
 
       // Validasi supplier
@@ -45,6 +45,7 @@ module.exports = {
           supplierId,
           productId,
           stockIn,
+          purchasePrice: purchasePrice ? BigInt(purchasePrice) : null, // Konversi ke BigInt jika ada
           dateStockIn: new Date(),
         },
       });
@@ -61,34 +62,29 @@ module.exports = {
         },
       });
 
+      // Convert BigInt to string for serialization
+      const serializedNewManageStock = {
+        ...newManageStock,
+        purchasePrice: newManageStock.purchasePrice
+          ? newManageStock.purchasePrice.toString()
+          : null,
+      };
+
+      const serializedUpdatedProduct = {
+        ...updatedProduct,
+        price: updatedProduct.price.toString(),
+        promoPrice: updatedProduct.promoPrice
+          ? updatedProduct.promoPrice.toString()
+          : null,
+      };
+
       res.status(200).json({
         success: true,
         message: "Manage stock created successfully",
         data: {
-          newManageStock,
-          updatedProduct,
+          newManageStock: serializedNewManageStock,
+          updatedProduct: serializedUpdatedProduct,
         },
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  // get all manageStok
-  getAllManageStock: async (req, res, next) => {
-    try {
-      // Mengambil semua data dari tabel ManageStock
-      const manageStock = await prisma.manageStock.findMany({
-        include: {
-          supplier: true, // Mengikutsertakan informasi supplier
-          product: true, // Mengikutsertakan informasi product
-        },
-      });
-
-      res.status(200).json({
-        success: true,
-        message: "Get all manage stock successfully",
-        data: manageStock,
       });
     } catch (error) {
       next(error);
@@ -99,7 +95,7 @@ module.exports = {
   updateManageStok: async (req, res, next) => {
     try {
       const { manageStockId } = req.params;
-      const { stockIn } = req.body;
+      const { stockIn, purchasePrice } = req.body;
 
       // Mencari entri ManageStock berdasarkan ID
       const existingManageStock = await prisma.manageStock.findUnique({
@@ -124,13 +120,22 @@ module.exports = {
         },
         data: {
           stockIn: stockIn,
+          purchasePrice: purchasePrice ? BigInt(purchasePrice) : null, // Konversi ke BigInt jika ada
         },
       });
+
+      // Convert BigInt to string for serialization
+      const serializedUpdatedManageStock = {
+        ...updatedManageStock,
+        purchasePrice: updatedManageStock.purchasePrice
+          ? updatedManageStock.purchasePrice.toString()
+          : null,
+      };
 
       res.status(200).json({
         success: true,
         message: "Manage stock updated successfully",
-        data: updatedManageStock,
+        data: serializedUpdatedManageStock,
       });
     } catch (error) {
       next(error);
@@ -177,6 +182,42 @@ module.exports = {
     }
   },
 
+  // get all manageStok
+  getAllManageStock: async (req, res, next) => {
+    try {
+      // Mengambil semua data dari tabel ManageStock
+      const manageStock = await prisma.manageStock.findMany({
+        include: {
+          supplier: true, // Mengikutsertakan informasi supplier
+          product: true, // Mengikutsertakan informasi product
+        },
+      });
+
+      // Convert BigInt to string for serialization
+      const serializedManageStock = manageStock.map((stock) => ({
+        ...stock,
+        purchasePrice: stock.purchasePrice
+          ? stock.purchasePrice.toString()
+          : null,
+        product: {
+          ...stock.product,
+          price: stock.product.price.toString(),
+          promoPrice: stock.product.promoPrice
+            ? stock.product.promoPrice.toString()
+            : null,
+        },
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: "Get all manage stock successfully",
+        data: serializedManageStock,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // get manageStok by id
   getManageStokById: async (req, res, next) => {
     try {
@@ -202,11 +243,26 @@ module.exports = {
         });
       }
 
+      // Convert BigInt to string for serialization
+      const serializedManageStock = {
+        ...manageStock,
+        purchasePrice: manageStock.purchasePrice
+          ? manageStock.purchasePrice.toString()
+          : null,
+        product: {
+          ...manageStock.product,
+          price: manageStock.product.price.toString(),
+          promoPrice: manageStock.product.promoPrice
+            ? manageStock.product.promoPrice.toString()
+            : null,
+        },
+      };
+
       // Jika entri ditemukan, kirimkan sebagai respons
       return res.status(200).json({
         success: true,
         message: "Manage stock found successfully",
-        data: manageStock,
+        data: serializedManageStock,
       });
     } catch (error) {
       // Tangani kesalahan jika terjadi

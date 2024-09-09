@@ -114,10 +114,12 @@ module.exports = {
       const cartDetails = carts.map((cart) => {
         return {
           productName: cart.products.name, // Nama produk
-          productPrice: cart.products.price, // Harga produk
+          productPrice: cart.products.price.toString(), // Harga produk (konversi BigInt ke string)
           productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
           productImage: cart.products.image, // Gambar produk
-          totalPricePerProduct: cart.products.price * cart.qty, // Total harga per produk
+          totalPricePerProduct: (
+            BigInt(cart.products.price) * BigInt(cart.qty)
+          ).toString(), // Total harga per produk (konversi BigInt ke string)
         };
       });
 
@@ -128,9 +130,9 @@ module.exports = {
         data: {
           transactionId: transaction.transactionId,
           userId: transaction.users.userId,
-          discount: transaction.discount,
-          ongkirValue: transaction.ongkirValue,
-          total: transaction.total,
+          discount: transaction.discount.toString(), // Konversi BigInt ke string
+          ongkirValue: transaction.ongkirValue.toString(), // Konversi BigInt ke string
+          total: transaction.total.toString(), // Konversi BigInt ke string
           status_payment: transaction.status_payment,
           payment_type: transaction.payment_type,
           transaction_time: transaction.transaction_time,
