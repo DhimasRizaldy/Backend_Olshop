@@ -3,7 +3,6 @@ const path = require("path");
 const imagekit = require("../libs/imagekit");
 const { v4: uuidv4 } = require("uuid");
 
-
 module.exports = {
   createProduct: async (req, res, next) => {
     try {
@@ -111,11 +110,14 @@ module.exports = {
           populer: { orderBy: { ratings: { _avg: "desc" } } },
           terbaru: { orderBy: { createdAt: "desc" } },
         };
-        baseQuery.orderBy = filterOptions[filter].orderBy;
+        baseQuery.orderBy = filterOptions[filter]?.orderBy || {};
       }
 
       // Fetch products
       const products = await prisma.products.findMany(baseQuery);
+
+      // Check if products are fetched correctly
+      console.log("Fetched Products:", products);
 
       // Process products
       const productsWithStats = products.map((product) => {
@@ -135,6 +137,8 @@ module.exports = {
           averageRating,
           totalSold,
           totalReview,
+          price: product.price.toString(), // Convert BigInt to string
+          promoPrice: product.promoPrice ? product.promoPrice.toString() : null, // Convert BigInt to string
         };
       });
 
@@ -151,6 +155,7 @@ module.exports = {
         data: filteredProducts,
       });
     } catch (error) {
+      console.error("Error in getAllProduct:", error); // Debugging error
       next(error);
     }
   },
@@ -254,6 +259,7 @@ module.exports = {
     try {
       const productId = req.params.productId;
 
+      // Fetch the product details
       const product = await prisma.products.findUnique({
         where: { productId },
         include: {
@@ -268,6 +274,7 @@ module.exports = {
         },
       });
 
+      // Handle product not found
       if (!product) {
         return res.status(404).json({
           success: false,
@@ -277,20 +284,20 @@ module.exports = {
         });
       }
 
-      const totalSold = product.carts.reduce(
-        (total, cart) => total + cart.qty,
-        0
-      );
-      const totalReview = product.ratings.length;
+      // Convert BigInt to string for serialization
+      const productWithConvertedValues = {
+        ...product,
+        price: product.price ? product.price.toString() : null,
+        promoPrice: product.promoPrice ? product.promoPrice.toString() : null,
+        totalSold: product.carts.reduce((total, cart) => total + cart.qty, 0),
+        totalReview: product.ratings.length,
+      };
 
+      // Send the response
       res.status(200).json({
         success: true,
         message: "Get product successfully",
-        data: {
-          ...product,
-          totalSold,
-          totalReview,
-        },
+        data: productWithConvertedValues,
       });
     } catch (error) {
       next(error);
