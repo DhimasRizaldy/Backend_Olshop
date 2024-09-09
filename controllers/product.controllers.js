@@ -9,10 +9,11 @@ module.exports = {
     try {
       const { name, categoryId, description } = req.body;
       let { price, promoPrice, weight, stock } = req.body;
-      // Konversi string ke angka
-      price = parseFloat(price);
-      promoPrice = parseFloat(promoPrice);
-      weight = parseFloat(weight);
+
+      // Konversi string ke BigInt
+      price = BigInt(parseFloat(price) * 100); // Contoh konversi, sesuaikan dengan kebutuhan Anda
+      promoPrice = promoPrice ? BigInt(parseFloat(promoPrice) * 100) : null; // Jika promoPrice ada
+      weight = parseFloat(weight); // Jika weight menggunakan tipe data Int, bisa tetap menggunakan parseFloat
       stock = parseInt(stock, 10);
 
       // Cek ketersediaan kategori
@@ -49,8 +50,8 @@ module.exports = {
           productId,
           name,
           categoryId,
-          price,
-          promoPrice,
+          price: price.toString(), // Prisma BigInt should be passed as a string
+          promoPrice: promoPrice ? promoPrice.toString() : null, // Prisma BigInt should be passed as a string
           weight,
           stock,
           description,
@@ -178,13 +179,13 @@ module.exports = {
         description,
       } = req.body;
 
+      // Cek apakah produk ada
       const product = await prisma.products.findUnique({
         where: {
           productId: productId,
         },
       });
 
-      // kondisi jika product tidak ditemukan
       if (!product || product.isDeleted) {
         return res.status(404).json({
           success: false,
@@ -194,8 +195,8 @@ module.exports = {
         });
       }
 
+      // Tangani gambar
       let imageUrl = product.image;
-
       const imageFile = req.file;
       if (imageFile) {
         const strFile = imageFile.buffer.toString("base64");
@@ -206,6 +207,7 @@ module.exports = {
         imageUrl = uploadedUrl;
       }
 
+      // Konversi nilai jika diperlukan
       let updateProduct = await prisma.products.update({
         where: {
           productId: productId,
@@ -213,8 +215,8 @@ module.exports = {
         data: {
           name,
           categoryId,
-          price: parseInt(price, 10),
-          promoPrice: parseInt(promoPrice, 10),
+          price: BigInt(price), // Gunakan BigInt jika diperlukan
+          promoPrice: BigInt(promoPrice), // Gunakan BigInt jika diperlukan
           weight: parseInt(weight, 10),
           stock: parseInt(stock, 10),
           description,
@@ -222,7 +224,7 @@ module.exports = {
         },
       });
 
-      // kondisi jika update product gagal
+      // Jika update gagal
       if (!updateProduct) {
         return res.status(500).json({
           success: false,
@@ -232,7 +234,7 @@ module.exports = {
         });
       }
 
-      // result jika update product sukses
+      // Jika update sukses
       res.status(200).json({
         success: true,
         message: "Product updated successfully",

@@ -65,8 +65,8 @@ model Products {
   productId   String        @id @default(uuid())
   name        String
   categoryId  String
-  price       Int
-  promoPrice  Int?
+  price       BigInt
+  promoPrice  BigInt?
   weight      Int?
   stock       Int
   description String
