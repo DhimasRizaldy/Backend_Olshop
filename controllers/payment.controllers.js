@@ -33,10 +33,32 @@ module.exports = {
       const { cartIds, promoId, addressId, ongkirValue, courier } = req.body;
       const { username, email, phoneNumber } = req.user;
 
+      // Validasi input
       if (!Array.isArray(cartIds) || cartIds.length === 0) {
         return res.status(400).json({
           status: false,
           message: "Invalid or missing cartIds",
+        });
+      }
+
+      if (!addressId) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid or missing addressId",
+        });
+      }
+
+      if (!ongkirValue || typeof ongkirValue !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid or missing ongkirValue",
+        });
+      }
+
+      if (!courier) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid or missing courier",
         });
       }
 
