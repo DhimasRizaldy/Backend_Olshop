@@ -112,13 +112,14 @@ module.exports = {
 
       // Memetakan produk dalam cart untuk mendapatkan nama, harga, kuantitas, dan gambar produk
       const cartDetails = carts.map((cart) => {
+        const productPrice = cart.products.promoPrice || cart.products.price; // Gunakan promoPrice jika ada, jika tidak gunakan price
         return {
           productName: cart.products.name, // Nama produk
-          productPrice: cart.products.price.toString(), // Harga produk (konversi BigInt ke string)
+          productPrice: productPrice.toString(), // Harga produk (konversi BigInt ke string)
           productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
           productImage: cart.products.image, // Gambar produk
           totalPricePerProduct: (
-            BigInt(cart.products.price) * BigInt(cart.qty)
+            BigInt(productPrice) * BigInt(cart.qty)
           ).toString(), // Total harga per produk (konversi BigInt ke string)
         };
       });
@@ -163,7 +164,23 @@ module.exports = {
     }
   },
 
-  // update transaction
+  // Function to send notification
+  sendNotification: async (userId, transactionId, title, body, description) => {
+    await prisma.notifications.create({
+      data: {
+        notificationId: uuidv4(),
+        userId,
+        transactionId,
+        title,
+        body,
+        description,
+        isRead: false,
+        isDeleted: false,
+      },
+    });
+  },
+
+  // Function to update transaction
   updateTransaction: async (req, res, next) => {
     try {
       const userId = req.user.userId;
@@ -217,6 +234,50 @@ module.exports = {
             receiptDelivery: receiptDelivery,
           },
         });
+
+        // Determine notification details based on status_payment and shippingStatus
+        let notificationBody = "";
+        let notificationDescription = `Silahkan klik link ini untuk melihat transaksi anda: https://putra-komputer.vercel.app/transaction-me/${transactionId}`;
+
+        if (status_payment === "Success" && shippingStatus === "On Process") {
+          notificationBody = "Pesanan Sedang Dikemas";
+          notificationDescription = `Pesanan Anda sedang dalam proses pengemasan. ${notificationDescription}`;
+        } else if (
+          status_payment === "Pending" &&
+          shippingStatus === "Pending"
+        ) {
+          notificationBody = "Pesanan Belum Dibayar";
+          notificationDescription = `Pesanan Anda belum dibayar. Silakan lakukan pembayaran. ${notificationDescription}`;
+        } else if (
+          status_payment === "Success" &&
+          shippingStatus === "Delivered"
+        ) {
+          notificationBody = "Pesanan Sedang Dikirim";
+          notificationDescription = `Pesanan Anda sedang dalam proses pengiriman. ${notificationDescription}`;
+        } else if (
+          status_payment === "Success" &&
+          shippingStatus === "Accepted"
+        ) {
+          notificationBody = "Pesanan Sudah Diterima";
+          notificationDescription = `Pesanan Anda telah diterima. ${notificationDescription}`;
+        } else if (
+          status_payment === "Cancelled" &&
+          shippingStatus === "Cancel"
+        ) {
+          notificationBody = "Pesanan Telah Dibatalkan";
+          notificationDescription = `Pesanan Anda telah dibatalkan. ${notificationDescription}`;
+        }
+
+        // Send notification if a valid condition is met
+        if (notificationBody) {
+          await module.exports.sendNotification(
+            transaction.userId, // Use the userId from the transaction
+            transactionId,
+            "Notification Transaction",
+            notificationBody,
+            notificationDescription
+          );
+        }
 
         return res.status(200).json({
           success: true,

@@ -738,6 +738,8 @@ module.exports = {
           title: "Notification",
           notificationId: uuidv4(),
           body: "Password reset successfully",
+          description:
+            "Your password has been reset successfully. Please click this link to login: https://putra-komputer.vercel.app/login",
           userId: decode.userId,
         },
       });
@@ -785,7 +787,7 @@ module.exports = {
       if (!isMatch) {
         return res.status(400).json({
           status: false,
-          messaga: "Old password is incorrect",
+          message: "Old password is incorrect",
           err: null,
           data: null,
         });
@@ -802,6 +804,8 @@ module.exports = {
           title: "Notification",
           notificationId: uuidv4(),
           body: "Password changed successfully",
+          description:
+            "Your password has been changed successfully. Please click this link to login: https://putra-komputer.vercel.app/login",
           userId: user.userId,
         },
       });
@@ -895,11 +899,12 @@ module.exports = {
         });
       }
 
-      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+      );
+      const { email, name, picture, sub: googleId } = response.data;
 
-      const { email, name, picture } = (await axios.get(response)).data;
-
-      const user = await prisma.users.findUnique({
+      let user = await prisma.users.findUnique({
         where: { email: email },
         include: { profiles: true },
       });
@@ -908,13 +913,13 @@ module.exports = {
         user = await prisma.users.upsert({
           where: { email: email },
           update: {
-            googleId: response.data.sub,
+            googleId: googleId,
             profiles: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: response.data.sub,
+            googleId: googleId,
             isVerified: true,
             profiles: { create: { fullName: name, imageProfile: picture } },
           },
@@ -925,7 +930,8 @@ module.exports = {
 
       let token = jwt.sign(
         { id: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" } // Token expires in 1 hour
       );
 
       return res.status(200).json({

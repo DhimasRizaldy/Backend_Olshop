@@ -10,194 +10,23 @@ const snap = new Midtrans.Snap({
 });
 
 module.exports = {
-  // checkout: async (req, res, next) => {
-  //   try {
-  //     const { userId } = req.user;
-  //     const { cartIds, promoId, addressId, ongkirValue, courier } = req.body;
-  //     const { username, email, phoneNumber } = req.user;
+  // Function to send notification
+  sendNotification: async (userId, transactionId, title, body, description) => {
+    await prisma.notifications.create({
+      data: {
+        notificationId: uuidv4(),
+        userId,
+        transactionId,
+        title,
+        body,
+        description,
+        isRead: false,
+        isDeleted: false,
+      },
+    });
+  },
 
-  //     if (!Array.isArray(cartIds) || cartIds.length === 0) {
-  //       return res.status(400).json({
-  //         status: false,
-  //         message: "Invalid or missing cartIds",
-  //       });
-  //     }
-
-  //     const transactionId = uuidv4();
-
-  //     const carts = await prisma.carts.findMany({
-  //       where: {
-  //         cartId: {
-  //           in: cartIds,
-  //         },
-  //       },
-  //       include: {
-  //         products: true,
-  //       },
-  //     });
-
-  //     if (carts.length === 0) {
-  //       return res.status(404).json({
-  //         status: false,
-  //         message: "No carts found",
-  //       });
-  //     }
-
-  //     let total = carts.reduce((total, cart) => {
-  //       if (
-  //         !cart.products ||
-  //         typeof cart.products.price !== "number" ||
-  //         typeof cart.qty !== "number"
-  //       ) {
-  //         console.error("Invalid cart data:", cart);
-  //         throw new Error(
-  //           "Invalid cart data: Price or Quantity is not a number"
-  //         );
-  //       }
-  //       return total + cart.products.price * cart.qty;
-  //     }, 0);
-
-  //     if (isNaN(total) || total <= 0) {
-  //       console.error("Calculated total is invalid:", total);
-  //       return res.status(400).json({
-  //         status: false,
-  //         message: "Total calculation error",
-  //       });
-  //     }
-
-  //     let discount = 0;
-  //     if (promoId) {
-  //       const promo = await prisma.promo.findUnique({
-  //         where: {
-  //           promoId: promoId,
-  //         },
-  //       });
-
-  //       if (!promo) {
-  //         return res.status(400).json({
-  //           status: false,
-  //           message: "Promo not found",
-  //         });
-  //       }
-
-  //       if (promo.expiresAt < new Date()) {
-  //         return res.status(400).json({
-  //           status: false,
-  //           message: "Promo expired",
-  //         });
-  //       }
-
-  //       discount = total * (promo.discount / 100);
-
-  //       if (isNaN(discount)) {
-  //         discount = 0;
-  //       }
-  //     }
-
-  //     total -= discount;
-  //     total += ongkirValue;
-
-  //     if (isNaN(total) || total <= 0) {
-  //       console.error("Final calculated total is invalid:", total);
-  //       return res.status(400).json({
-  //         status: false,
-  //         message: "Total calculation error after discount and shipping",
-  //       });
-  //     }
-
-  //     // Membuat transaksi dengan relasi address
-  //     const transaction = await prisma.transactions.create({
-  //       data: {
-  //         transactionId,
-  //         userId,
-  //         cartIds,
-  //         promoId,
-  //         addressId,
-  //         discount,
-  //         ongkirValue,
-  //         courier,
-  //         total,
-  //         status_payment: "Pending",
-  //         payment_type: null,
-  //       },
-  //     });
-
-  //     // Membuat transaksi di Midtrans
-  //     const midtransTransaction = await snap.createTransaction({
-  //       transaction_details: {
-  //         order_id: transactionId,
-  //         gross_amount: total,
-  //       },
-  //       customer_details: {
-  //         first_name: username,
-  //         email,
-  //         phone: phoneNumber,
-  //       },
-  //     });
-
-  //     // Simpan paymentUrl dan token ke dalam database
-  //     await prisma.transactions.update({
-  //       where: {
-  //         transactionId: transaction.transactionId,
-  //       },
-  //       data: {
-  //         paymentUrl: midtransTransaction.redirect_url,
-  //         token: midtransTransaction.token,
-  //       },
-  //     });
-
-  //     // Update stok produk di database setelah pembayaran berhasil
-  //     await Promise.all(
-  //       carts.map(async (cart) => {
-  //         const product = cart.products;
-  //         const newStock = product.stock - cart.qty;
-
-  //         if (newStock < 0) {
-  //           throw new Error(
-  //             `Insufficient stock for product ${product.productId}`
-  //           );
-  //         }
-
-  //         await prisma.products.update({
-  //           where: {
-  //             productId: product.productId,
-  //           },
-  //           data: {
-  //             stock: newStock,
-  //           },
-  //         });
-  //       })
-  //     );
-
-  //     // Update status isCheckout pada carts
-  //     await prisma.carts.updateMany({
-  //       where: {
-  //         cartId: {
-  //           in: cartIds,
-  //         },
-  //       },
-  //       data: {
-  //         isCheckout: true,
-  //       },
-  //     });
-
-  //     return res.status(200).json({
-  //       status: true,
-  //       message: "Transaction created successfully",
-  //       data: {
-  //         ...transaction,
-  //         paymentUrl: midtransTransaction.redirect_url,
-  //         token: midtransTransaction.token,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Checkout error:", error);
-  //     next(error);
-  //   }
-  // },
-
-  // notification payment
-
+  // Function to handle checkout
   checkout: async (req, res, next) => {
     try {
       const { userId } = req.user;
@@ -234,7 +63,8 @@ module.exports = {
       let total = carts.reduce((total, cart) => {
         if (
           !cart.products ||
-          typeof cart.products.price !== "bigint" ||
+          (typeof cart.products.price !== "bigint" &&
+            typeof cart.products.promoPrice !== "bigint") ||
           typeof cart.qty !== "number"
         ) {
           console.error("Invalid cart data:", cart);
@@ -242,7 +72,8 @@ module.exports = {
             "Invalid cart data: Price or Quantity is not a number"
           );
         }
-        return total + Number(cart.products.price) * cart.qty;
+        const productPrice = cart.products.promoPrice || cart.products.price;
+        return total + Number(productPrice) * cart.qty;
       }, 0);
 
       if (isNaN(total) || total <= 0) {
@@ -299,7 +130,7 @@ module.exports = {
           transactionId,
           userId,
           cartIds,
-          promoId,
+          promoId: promoId || null, // Set promoId to null if not provided
           addressId,
           discount,
           ongkirValue,
@@ -384,6 +215,7 @@ module.exports = {
     }
   },
 
+  // Function to handle notification
   notification: async (req, res, next) => {
     try {
       const {
@@ -462,6 +294,21 @@ module.exports = {
             transaction_time: new Date(), // Waktu sekarang
           },
         });
+
+        // Send notification if status_payment is "Success" and shippingStatus is "Pending"
+        if (
+          status_payment === "Success" &&
+          transaction.shippingStatus === "Pending"
+        ) {
+          const notificationDescription = `Pesanan Berhasil dibuat. Silahkan klik link ini untuk melihat transaksi anda: https://putra-komputer.vercel.app/transaction-me/${transactionId}`;
+          await module.exports.sendNotification(
+            transaction.userId,
+            transactionId,
+            "Notification Payment",
+            "Pesanan Berhasil dibuat",
+            notificationDescription
+          );
+        }
 
         console.log("Transaction updated successfully:", {
           transactionId: transactionId,

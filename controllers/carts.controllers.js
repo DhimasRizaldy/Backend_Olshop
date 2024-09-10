@@ -34,18 +34,36 @@ module.exports = {
         });
       }
 
+      // Fetch product details
+      const product = await prisma.products.findUnique({
+        where: { productId: productId },
+      });
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      // Determine the price to use
+      const price = product.promoPrice ? product.promoPrice : product.price;
+
       let newCarts = await prisma.carts.create({
         data: {
           cartId: cartId,
           qty: qty,
-          users: {
-            connect: { userId: userId },
-          },
-          products: {
-            connect: { productId: productId },
-          },
+          price: BigInt(price), // Store the determined price in the cart as BigInt
+          userId: userId,
+          productId: productId,
         },
       });
+
+      // Convert BigInt to string for serialization
+      newCarts = {
+        ...newCarts,
+        price: newCarts.price.toString(),
+      };
 
       res.status(200).json({
         success: true,
@@ -54,10 +72,6 @@ module.exports = {
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging
-      res.status(500).json({
-        success: false,
-        message: "An error occurred while creating the cart",
-      });
       next(error); // Call the next middleware to handle the error if necessary
     }
   },
@@ -87,6 +101,7 @@ module.exports = {
               name: true,
               image: true,
               price: true,
+              promoPrice: true, // Include promoPrice
               stock: true,
             },
           },
@@ -96,9 +111,13 @@ module.exports = {
       // Convert BigInt to string for serialization
       carts = carts.map((cart) => ({
         ...cart,
+        price: cart.price.toString(), // Convert cart price to string
         products: {
           ...cart.products,
-          price: cart.products.price.toString(),
+          price: cart.products.price.toString(), // Convert product price to string
+          promoPrice: cart.products.promoPrice
+            ? cart.products.promoPrice.toString()
+            : null, // Convert promoPrice to string if it exists
         },
       }));
 
@@ -110,10 +129,6 @@ module.exports = {
       });
     } catch (error) {
       console.error(error); // Log error for debugging
-      res.status(500).json({
-        success: false,
-        message: "An error occurred while retrieving carts",
-      });
       next(error); // Call the next middleware for error handling
     }
   },
@@ -183,6 +198,12 @@ module.exports = {
         },
       });
 
+      // Convert BigInt to string for serialization
+      updateCarts = {
+        ...updateCarts,
+        price: updateCarts.price.toString(), // Convert cart price to string
+      };
+
       res.status(200).json({
         success: true,
         message: "Successfully updated cart",
@@ -190,11 +211,6 @@ module.exports = {
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging
-      res.status(500).json({
-        success: false,
-        message: "An error occurred while updating the cart",
-        err: error.message,
-      });
       next(error); // Call the next middleware to handle the error if necessary
     }
   },
@@ -261,6 +277,12 @@ module.exports = {
         },
       });
 
+      // Convert BigInt to string for serialization
+      deleteCarts = {
+        ...deleteCarts,
+        price: deleteCarts.price.toString(), // Convert cart price to string
+      };
+
       res.status(200).json({
         success: true,
         message: "Successfully deleted cart",
@@ -268,10 +290,6 @@ module.exports = {
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging
-      res.status(500).json({
-        success: false,
-        message: "An error occurred while deleting the cart",
-      });
       next(error); // Call the next middleware to handle the error if necessary
     }
   },
@@ -304,7 +322,15 @@ module.exports = {
           cartId: cartId,
         },
         include: {
-          products: true,
+          products: {
+            select: {
+              name: true,
+              image: true,
+              price: true,
+              promoPrice: true, // Include promoPrice
+              stock: true,
+            },
+          },
         },
       });
 
@@ -331,9 +357,13 @@ module.exports = {
       // Convert BigInt to string for serialization
       cart = {
         ...cart,
+        price: cart.price.toString(), // Convert cart price to string
         products: {
           ...cart.products,
-          price: cart.products.price.toString(),
+          price: cart.products.price.toString(), // Convert product price to string
+          promoPrice: cart.products.promoPrice
+            ? cart.products.promoPrice.toString()
+            : null, // Convert promoPrice to string if it exists
         },
       };
 
@@ -345,10 +375,6 @@ module.exports = {
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging
-      res.status(500).json({
-        success: false,
-        message: "An error occurred while retrieving the cart details",
-      });
       next(error); // Call the next middleware to handle the error if necessary
     }
   },

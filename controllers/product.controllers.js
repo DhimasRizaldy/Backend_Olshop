@@ -125,9 +125,6 @@ module.exports = {
       // Fetch products
       const products = await prisma.products.findMany(baseQuery);
 
-      // Check if products are fetched correctly
-      // console.log("Fetched Products:", products);
-
       // Process products
       const productsWithStats = products.map((product) => {
         const averageRating = product.ratings.length
@@ -141,13 +138,20 @@ module.exports = {
         );
         const totalReview = product.ratings.length;
 
+        // Convert BigInt to string for product and related carts
+        const convertedCarts = product.carts.map((cart) => ({
+          ...cart,
+          price: cart.price ? cart.price.toString() : null,
+        }));
+
         return {
           ...product,
           averageRating,
           totalSold,
           totalReview,
-          price: product.price.toString(), // Convert BigInt to string
+          price: product.price ? product.price.toString() : null, // Convert BigInt to string
           promoPrice: product.promoPrice ? product.promoPrice.toString() : null, // Convert BigInt to string
+          carts: convertedCarts,
         };
       });
 
@@ -312,12 +316,18 @@ module.exports = {
       }
 
       // Convert BigInt to string for serialization
+      const convertedCarts = product.carts.map((cart) => ({
+        ...cart,
+        price: cart.price ? cart.price.toString() : null,
+      }));
+
       const productWithConvertedValues = {
         ...product,
         price: product.price ? product.price.toString() : null,
         promoPrice: product.promoPrice ? product.promoPrice.toString() : null,
         totalSold: product.carts.reduce((total, cart) => total + cart.qty, 0),
         totalReview: product.ratings.length,
+        carts: convertedCarts,
       };
 
       // Send the response
@@ -327,6 +337,7 @@ module.exports = {
         data: productWithConvertedValues,
       });
     } catch (error) {
+      console.error("Error in getDetailProduct:", error); // Debugging error
       next(error);
     }
   },
