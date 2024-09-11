@@ -315,6 +315,16 @@ module.exports = {
         });
       }
 
+      // Calculate average rating
+      const totalRating = product.ratings.reduce(
+        (total, rating) => total + rating.rating,
+        0
+      );
+      const averageRating =
+        product.ratings.length > 0
+          ? (totalRating / product.ratings.length).toFixed(2)
+          : null;
+
       // Convert BigInt to string for serialization
       const convertedCarts = product.carts.map((cart) => ({
         ...cart,
@@ -327,6 +337,7 @@ module.exports = {
         promoPrice: product.promoPrice ? product.promoPrice.toString() : null,
         totalSold: product.carts.reduce((total, cart) => total + cart.qty, 0),
         totalReview: product.ratings.length,
+        averageRating,
         carts: convertedCarts,
       };
 

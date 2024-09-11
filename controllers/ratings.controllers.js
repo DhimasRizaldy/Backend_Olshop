@@ -1,21 +1,35 @@
 const prisma = require("../libs/prisma");
+const path = require("path");
+const imagekit = require("../libs/imagekit");
 const { v4: uuidv4 } = require("uuid");
 
 module.exports = {
   // create ratings
   createRatings: async (req, res, next) => {
     try {
-      const { productId, rating, image, review } = req.body;
+      const { productId, rating, review } = req.body;
       const userId = req.user.userId;
       const ratingId = uuidv4();
 
       // Validasi nilai rating
-      if (rating < 1 || rating > 5) {
+      const ratingInt = parseInt(rating, 10);
+      if (ratingInt < 1 || ratingInt > 5) {
         return res.status(400).json({
           success: false,
           message: "Rating should be between 1 and 5",
           data: null,
         });
+      }
+
+      let image = null;
+      // Validate image
+      if (req.file) {
+        const strFile = req.file.buffer.toString("base64");
+        const { url } = await imagekit.upload({
+          fileName: Date.now() + path.extname(req.file.originalname),
+          file: strFile,
+        });
+        image = url;
       }
 
       // Membuat entri baru dalam tabel Ratings
@@ -24,7 +38,7 @@ module.exports = {
           ratingId,
           userId: userId,
           productId,
-          rating,
+          rating: ratingInt,
           image,
           review,
         },
@@ -67,11 +81,20 @@ module.exports = {
         },
       });
 
+      // Konversi nilai BigInt menjadi string
+      const serializedRatings = allRatings.map((rating) => ({
+        ...rating,
+        products: {
+          ...rating.products,
+          price: rating.products.price.toString(),
+        },
+      }));
+
       // Mengirimkan respons sukses bersama dengan daftar semua penilaian
       return res.status(200).json({
         success: true,
         message: "Get all ratings successfully",
-        data: allRatings,
+        data: serializedRatings,
       });
     } catch (error) {
       // Tangani kesalahan jika terjadi

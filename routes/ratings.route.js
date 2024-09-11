@@ -9,12 +9,13 @@ const {
 } = require("../controllers/ratings.controllers");
 const verifyToken = require("../middlewares/verifyToken");
 const verifyAdmin = require("../middlewares/verifyAdmin");
+const { upload } = require("../libs/multer");
 
 // route ratings
-router.post("/", verifyToken, createRatings);
+router.post("/", verifyToken, upload.single("image"), createRatings);
 router.get("/", getAllRatings);
-router.get("/:ratingsId", getDetailRatings);
-router.put("/:ratingsId", verifyToken, updateRatings);
-router.delete("/:ratingsId", verifyToken, deleteRatings);
+router.get("/:ratingId", getDetailRatings);
+router.put("/:ratingId", verifyToken, upload.single("image"), updateRatings);
+router.delete("/:ratingId", verifyToken, verifyAdmin, deleteRatings);
 
 module.exports = router;
