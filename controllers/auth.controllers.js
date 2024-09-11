@@ -737,9 +737,8 @@ module.exports = {
         data: {
           title: "Notification",
           notificationId: uuidv4(),
-          body: "Password reset successfully",
-          description:
-            "Your password has been reset successfully. Please click this link to login: https://putra-komputer.vercel.app/login",
+          body: "Password berhasil direset",
+          description: "Password Anda telah berhasil direset.",
           userId: decode.userId,
         },
       });
@@ -803,9 +802,8 @@ module.exports = {
         data: {
           title: "Notification",
           notificationId: uuidv4(),
-          body: "Password changed successfully",
-          description:
-            "Your password has been changed successfully. Please click this link to login: https://putra-komputer.vercel.app/login",
+          body: "Password berhasil diubah",
+          description: "Password Anda telah berhasil diubah.",
           userId: user.userId,
         },
       });

@@ -322,12 +322,12 @@ module.exports = {
           status_payment === "Success" &&
           transaction.shippingStatus === "Pending"
         ) {
-          const notificationDescription = `Pesanan Berhasil dibuat. Silahkan klik link ini untuk melihat transaksi anda: https://putra-komputer.vercel.app/transaction-me/${transactionId}`;
+          const notificationDescription = `Pesanan Berhasil dibayar. Pesanan anda akan diproses admin. silahkan cek detail pesanan anda.`;
           await module.exports.sendNotification(
             transaction.userId,
             transactionId,
             "Notification Payment",
-            "Pesanan Berhasil dibuat",
+            "Pesanan Berhasil dibayar",
             notificationDescription
           );
         }

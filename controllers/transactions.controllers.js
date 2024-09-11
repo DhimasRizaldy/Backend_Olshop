@@ -237,11 +237,11 @@ module.exports = {
 
         // Determine notification details based on status_payment and shippingStatus
         let notificationBody = "";
-        let notificationDescription = `Silahkan klik link ini untuk melihat transaksi anda: https://putra-komputer.vercel.app/transaction-me/${transactionId}`;
+        let notificationDescription = `silakan cek detail pesanan anda.`;
 
         if (status_payment === "Success" && shippingStatus === "On Process") {
           notificationBody = "Pesanan Sedang Dikemas";
-          notificationDescription = `Pesanan Anda sedang dalam proses pengemasan. ${notificationDescription}`;
+          notificationDescription = `Pesanan Anda sedang dalam proses pengemasan. mohon tunggu admin akan menyiapkan pesanan anda dan akan menyerahkan pesanan anda ke kurir. paket anda akan diserahkan sesuai jadwal pengiriman hari ini. ${notificationDescription}`;
         } else if (
           status_payment === "Pending" &&
           shippingStatus === "Pending"
@@ -253,13 +253,13 @@ module.exports = {
           shippingStatus === "Delivered"
         ) {
           notificationBody = "Pesanan Sedang Dikirim";
-          notificationDescription = `Pesanan Anda sedang dalam proses pengiriman. ${notificationDescription}`;
+          notificationDescription = `Pesanan Anda sedang dalam proses pengiriman. silahkan cek resi anda didetail transaksi. anda bisa melacak status pengiriman di menu tracking order ${notificationDescription}`;
         } else if (
           status_payment === "Success" &&
           shippingStatus === "Accepted"
         ) {
           notificationBody = "Pesanan Sudah Diterima";
-          notificationDescription = `Pesanan Anda telah diterima. ${notificationDescription}`;
+          notificationDescription = `Pesanan Anda telah diterima. silahkan lakukan unboxing paket anda dan berikan review produk yang anda beli. ${notificationDescription}`;
         } else if (
           status_payment === "Cancelled" &&
           shippingStatus === "Cancel"
