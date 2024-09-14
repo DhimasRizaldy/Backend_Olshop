@@ -29,7 +29,7 @@ router.post("/register-admin", verifyToken, verifyAdmin, registerAdmin);
 router.get("/whoami", verifyToken, authenticate);
 router.post("/resend-otp", resendOTP);
 router.post("/forgot-password", forgotPassword);
-router.post("/reset-password",  resetPassword);
+router.post("/reset-password", resetPassword);
 router.put("/change-password", verifyToken, changePassword);
 
 // Google OAuth
