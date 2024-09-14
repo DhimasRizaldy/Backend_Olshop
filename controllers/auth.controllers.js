@@ -897,6 +897,9 @@ module.exports = {
         });
       }
 
+      // Log the access token for debugging purposes
+      console.log("Access Token:", access_token);
+
       const response = await axios.get(
         `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
       );
@@ -939,6 +942,11 @@ module.exports = {
         data: { user, token },
       });
     } catch (error) {
+      // Log the error for debugging purposes
+      console.error(
+        "Error during Google login:",
+        error.response ? error.response.data : error.message
+      );
       next(error);
     }
   },
