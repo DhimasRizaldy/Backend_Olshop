@@ -888,7 +888,6 @@ module.exports = {
     try {
       const { access_token } = req.body;
 
-      // Validasi access_token
       if (!access_token) {
         return res.status(400).json({
           success: false,
@@ -898,25 +897,9 @@ module.exports = {
         });
       }
 
-      // Ambil data user dari Google API
-      let googleUserResponse;
-      try {
-        googleUserResponse = await axios.get(
-          `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
-        );
-      } catch (error) {
-        if (error.response && error.response.status === 401) {
-          return res.status(401).json({
-            success: false,
-            message: "Unauthorized",
-            err: "Invalid Credentials",
-            data: null,
-          });
-        }
-        throw error;
-      }
+      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
 
-      const { email, name, picture, sub: googleId } = googleUserResponse.data;
+      const { email, name, picture } = response.data;
 
       // Cek apakah user sudah ada berdasarkan email
       let user = await prisma.users.findUnique({
@@ -950,14 +933,11 @@ module.exports = {
       // Hapus password dari objek user sebelum mengirim ke client
       delete user.password;
 
-      // Buat token JWT
-      const token = jwt.sign(
-        { id: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" } // Token berlaku selama 1 jam
+      let token = jwt.sign(
+        { id: user.id, nickname: user.nickname, email: user.email },
+        process.env.JWT_SECRET
       );
 
-      // Kirim respons berhasil dengan data user dan token
       return res.status(200).json({
         success: true,
         message: "OK",
