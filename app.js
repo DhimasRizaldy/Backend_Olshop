@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 // Set COOP and COEP headers (Make them more permissive if needed)
 app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none"); // Allow window interactions
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups"); // Allow window interactions
   res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none"); // Allow more permissive embedding
   next();
 });
