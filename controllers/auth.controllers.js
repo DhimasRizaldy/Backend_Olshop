@@ -897,9 +897,13 @@ module.exports = {
         });
       }
 
-      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+      // Gunakan axios untuk mendapatkan data dari Google API
+      const googleResponse = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+      );
 
-      const { email, name, picture } = response.data;
+      // Destrukturisasi data dari respons
+      const { email, name, picture, sub } = googleResponse.data;
 
       // Cek apakah user sudah ada berdasarkan email
       let user = await prisma.users.findUnique({
@@ -912,13 +916,13 @@ module.exports = {
         user = await prisma.users.upsert({
           where: { email: email },
           update: {
-            googleId: response.data.sub,
+            googleId: sub,
             profiles: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: response.data.sub,
+            googleId: sub,
             isVerified: true,
             profiles: {
               create: {
