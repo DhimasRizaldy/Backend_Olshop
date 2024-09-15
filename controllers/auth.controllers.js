@@ -888,6 +888,7 @@ module.exports = {
     try {
       const { access_token } = req.body;
 
+      // Validasi access_token
       if (!access_token) {
         return res.status(400).json({
           success: false,
@@ -897,32 +898,30 @@ module.exports = {
         });
       }
 
-      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+      // Ambil data user dari Google API
+      const googleUserResponse = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+      );
+      const { email, name, picture, sub: googleId } = googleUserResponse.data;
 
-      const { email, name, picture } = response.data;
-
+      // Cek apakah user sudah ada berdasarkan email
       let user = await prisma.users.findUnique({
-        where: {
-          email: email,
-        },
-        include: {
-          profiles: true,
-        },
+        where: { email: email },
+        include: { profiles: true },
       });
 
+      // Jika user belum ada, buat user baru atau update googleId dan image profile
       if (!user) {
         user = await prisma.users.upsert({
-          where: {
-            email: email,
-          },
+          where: { email: email },
           update: {
-            googleId: response.data.sub,
+            googleId: googleId,
             profiles: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: response.data.sub,
+            googleId: googleId,
             isVerified: true,
             profiles: {
               create: {
@@ -934,13 +933,17 @@ module.exports = {
         });
       }
 
+      // Hapus password dari objek user sebelum mengirim ke client
       delete user.password;
 
-      let token = jwt.sign(
+      // Buat token JWT
+      const token = jwt.sign(
         { id: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" } // Token berlaku selama 1 jam
       );
 
+      // Kirim respons berhasil dengan data user dan token
       return res.status(200).json({
         success: true,
         message: "OK",
