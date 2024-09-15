@@ -10,11 +10,10 @@ const path = require("path");
 const { serverError, notFound } = require("./middlewares/errorHandling");
 const PORT = process.env.PORT || 3000;
 
-
-// Set COOP header
+// Set COOP and COEP headers (Make them more permissive if needed)
 app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none"); // Change to 'unsafe-none' to allow window interactions
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none"); // Allow more permissive embedding
   next();
 });
 
