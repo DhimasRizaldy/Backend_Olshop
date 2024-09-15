@@ -933,7 +933,7 @@ module.exports = {
       delete user.password;
 
       let token = jwt.sign(
-        { id: user.userId, username: user.username, email: user.email },
+        { userId: user.userId, username: user.username, email: user.email },
         process.env.JWT_SECRET
       );
 
