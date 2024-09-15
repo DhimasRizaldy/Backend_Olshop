@@ -10,12 +10,14 @@ const path = require("path");
 const { serverError, notFound } = require("./middlewares/errorHandling");
 const PORT = process.env.PORT || 3000;
 
-// cors
-// app.use(
-//   cors({
-//     origin: "*",
-//   })
-// );
+
+// Set COOP header
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  next();
+});
+
 app.use(cors());
 
 // json
