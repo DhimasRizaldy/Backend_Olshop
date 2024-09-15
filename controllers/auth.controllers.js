@@ -897,9 +897,17 @@ module.exports = {
         });
       }
 
-      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+      // Log the access token for debugging purposes
+      console.log("Access Token:", access_token);
 
-      const { email, name, picture } = response.data;
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+      );
+
+      // Log the response data for debugging purposes
+      console.log("Google API Response:", response.data);
+
+      const { email, name, picture, sub: googleId } = response.data;
 
       let user = await prisma.users.findUnique({
         where: {
@@ -916,13 +924,13 @@ module.exports = {
             email: email,
           },
           update: {
-            googleId: response.data.sub,
+            googleId: googleId,
             profile: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: response.data.sub,
+            googleId: googleId,
             isVerified: true,
             profile: {
               create: {
@@ -938,7 +946,8 @@ module.exports = {
 
       let token = jwt.sign(
         { id: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" } // Token expires in 1 hour
       );
 
       return res.status(200).json({
@@ -948,6 +957,11 @@ module.exports = {
         data: { ...user, token },
       });
     } catch (error) {
+      // Log the error for debugging purposes
+      console.error(
+        "Error during Google login:",
+        error.response ? error.response.data : error.message
+      );
       next(error);
     }
   },
