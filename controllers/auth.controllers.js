@@ -912,13 +912,13 @@ module.exports = {
         user = await prisma.users.upsert({
           where: { email: email },
           update: {
-            googleId: googleId,
+            googleId: response.data.sub,
             profiles: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: googleId,
+            googleId: response.data.sub,
             isVerified: true,
             profiles: {
               create: {
@@ -930,11 +930,10 @@ module.exports = {
         });
       }
 
-      // Hapus password dari objek user sebelum mengirim ke client
       delete user.password;
 
       let token = jwt.sign(
-        { id: user.id, nickname: user.nickname, email: user.email },
+        { id: user.userId, username: user.username, email: user.email },
         process.env.JWT_SECRET
       );
 
