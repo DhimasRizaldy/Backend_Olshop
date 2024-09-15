@@ -897,69 +897,85 @@ module.exports = {
         });
       }
 
-      // Lakukan permintaan ke Google API dengan access_token yang benar
-      const googleResponse = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
-      );
+      const url = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
 
-      // Validasi respon dari Google API
-      const { email, name, picture, sub } = googleResponse.data;
-      if (!email || !name || !picture || !sub) {
-        return res.status(400).json({
-          success: false,
-          message: "Bad Request",
-          err: "Invalid response from Google API",
-          data: null,
+      https
+        .get(url, (response) => {
+          let data = "";
+
+          response.on("data", (chunk) => {
+            data += chunk;
+          });
+
+          response.on("end", async () => {
+            try {
+              const googleResponse = JSON.parse(data);
+              const { email, name, picture, sub } = googleResponse;
+
+              if (!email || !name || !picture || !sub) {
+                return res.status(400).json({
+                  success: false,
+                  message: "Bad Request",
+                  err: "Invalid response from Google API",
+                  data: null,
+                });
+              }
+
+              let user = await prisma.users.findUnique({
+                where: { email: email },
+                include: { profiles: true },
+              });
+
+              if (!user) {
+                user = await prisma.users.upsert({
+                  where: { email: email },
+                  update: {
+                    googleId: sub,
+                    profiles: { update: { imageProfile: picture } },
+                  },
+                  create: {
+                    username: name,
+                    email: email,
+                    googleId: sub,
+                    isVerified: true,
+                    profiles: {
+                      create: {
+                        fullName: name,
+                        imageProfile: picture,
+                      },
+                    },
+                  },
+                });
+              }
+
+              delete user.password;
+
+              let token = jwt.sign(
+                {
+                  userId: user.userId,
+                  username: user.username,
+                  email: user.email,
+                },
+                process.env.JWT_SECRET
+              );
+
+              return res.status(200).json({
+                success: true,
+                message: "OK",
+                err: null,
+                data: { ...user, token },
+              });
+            } catch (error) {
+              console.error("Error processing Google response:", error);
+              next(error);
+            }
+          });
+        })
+        .on("error", (error) => {
+          console.error("Error during Google API request:", error);
+          next(error);
         });
-      }
-
-      // Cek apakah user sudah ada berdasarkan email
-      let user = await prisma.users.findUnique({
-        where: { email: email },
-        include: { profiles: true },
-      });
-
-      // Jika user belum ada, buat user baru atau update googleId dan image profile
-      if (!user) {
-        user = await prisma.users.upsert({
-          where: { email: email },
-          update: {
-            googleId: sub,
-            profiles: { update: { imageProfile: picture } },
-          },
-          create: {
-            username: name,
-            email: email,
-            googleId: sub,
-            isVerified: true,
-            profiles: {
-              create: {
-                fullName: name,
-                imageProfile: picture,
-              },
-            },
-          },
-        });
-      }
-
-      // Hapus password sebelum mengirimkan data user
-      delete user.password;
-
-      // Buat token JWT
-      let token = jwt.sign(
-        { userId: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET
-      );
-
-      // Kirim respons
-      return res.status(200).json({
-        success: true,
-        message: "OK",
-        err: null,
-        data: { ...user, token },
-      });
     } catch (error) {
-      // Tangani error dengan lebih spesifik jika perlu
       console.error("Error during Google login:", error);
       next(error);
     }
