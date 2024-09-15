@@ -899,9 +899,23 @@ module.exports = {
       }
 
       // Ambil data user dari Google API
-      const googleUserResponse = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
-      );
+      let googleUserResponse;
+      try {
+        googleUserResponse = await axios.get(
+          `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+        );
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          return res.status(401).json({
+            success: false,
+            message: "Unauthorized",
+            err: "Invalid Credentials",
+            data: null,
+          });
+        }
+        throw error;
+      }
+
       const { email, name, picture, sub: googleId } = googleUserResponse.data;
 
       // Cek apakah user sudah ada berdasarkan email
