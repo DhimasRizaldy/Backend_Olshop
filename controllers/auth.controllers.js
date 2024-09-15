@@ -890,39 +890,46 @@ module.exports = {
 
       if (!access_token) {
         return res.status(400).json({
-          status: false,
+          success: false,
           message: "Bad Request",
-          err: "Access token is required",
+          err: "Access token required",
           data: null,
         });
       }
 
-      // Log the access token for debugging purposes
-      console.log("Access Token:", access_token);
+      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
 
-      const response = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
-      );
-      const { email, name, picture, sub: googleId } = response.data;
+      const { email, name, picture } = response.data;
 
       let user = await prisma.users.findUnique({
-        where: { email: email },
-        include: { profiles: true },
+        where: {
+          email: email,
+        },
+        include: {
+          profiles: true,
+        },
       });
 
       if (!user) {
         user = await prisma.users.upsert({
-          where: { email: email },
+          where: {
+            email: email,
+          },
           update: {
-            googleId: googleId,
-            profiles: { update: { imageProfile: picture } },
+            googleId: response.data.sub,
+            profile: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: googleId,
+            googleId: response.data.sub,
             isVerified: true,
-            profiles: { create: { fullName: name, imageProfile: picture } },
+            profile: {
+              create: {
+                fullName: name,
+                imageProfile: picture,
+              },
+            },
           },
         });
       }
@@ -931,22 +938,16 @@ module.exports = {
 
       let token = jwt.sign(
         { id: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" } // Token expires in 1 hour
+        process.env.JWT_SECRET
       );
 
       return res.status(200).json({
-        status: true,
-        message: "User logged in successfully",
+        success: true,
+        message: "OK",
         err: null,
-        data: { user, token },
+        data: { ...user, token },
       });
     } catch (error) {
-      // Log the error for debugging purposes
-      console.error(
-        "Error during Google login:",
-        error.response ? error.response.data : error.message
-      );
       next(error);
     }
   },
