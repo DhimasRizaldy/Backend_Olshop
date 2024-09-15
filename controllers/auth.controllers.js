@@ -888,22 +888,30 @@ module.exports = {
     try {
       const { access_token } = req.body;
 
-      if (!access_token) {
+      if (!access_token || typeof access_token !== "string") {
         return res.status(400).json({
           success: false,
           message: "Bad Request",
-          err: "Access token required",
+          err: "Valid access token required",
           data: null,
         });
       }
 
-      // Gunakan axios untuk mendapatkan data dari Google API
+      // Lakukan permintaan ke Google API dengan access_token yang benar
       const googleResponse = await axios.get(
         `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
       );
 
-      // Destrukturisasi data dari respons
+      // Validasi respon dari Google API
       const { email, name, picture, sub } = googleResponse.data;
+      if (!email || !name || !picture || !sub) {
+        return res.status(400).json({
+          success: false,
+          message: "Bad Request",
+          err: "Invalid response from Google API",
+          data: null,
+        });
+      }
 
       // Cek apakah user sudah ada berdasarkan email
       let user = await prisma.users.findUnique({
@@ -934,13 +942,16 @@ module.exports = {
         });
       }
 
+      // Hapus password sebelum mengirimkan data user
       delete user.password;
 
+      // Buat token JWT
       let token = jwt.sign(
         { userId: user.userId, username: user.username, email: user.email },
         process.env.JWT_SECRET
       );
 
+      // Kirim respons
       return res.status(200).json({
         success: true,
         message: "OK",
@@ -948,6 +959,8 @@ module.exports = {
         data: { ...user, token },
       });
     } catch (error) {
+      // Tangani error dengan lebih spesifik jika perlu
+      console.error("Error during Google login:", error);
       next(error);
     }
   },
