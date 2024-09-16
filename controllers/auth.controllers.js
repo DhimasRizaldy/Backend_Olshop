@@ -909,7 +909,7 @@ module.exports = {
           email: email,
         },
         include: {
-          profile: true,
+          profiles: true,
         },
       });
 
@@ -920,14 +920,14 @@ module.exports = {
           },
           update: {
             googleId: sub,
-            profile: { update: { imageProfile: picture } },
+            profiles: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
             googleId: sub,
             isVerified: true,
-            profile: {
+            profiles: {
               create: {
                 fullName: name,
                 imageProfile: picture,
