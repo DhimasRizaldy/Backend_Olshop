@@ -10,6 +10,7 @@ const { emailOtpVerify } = require("../libs/template-email/emailOtpVerify");
 const {
   emailResetPassword,
 } = require("../libs/template-email/emailResetPassword");
+const { use } = require("bcrypt/promises");
 
 module.exports = {
   // login users
@@ -888,95 +889,66 @@ module.exports = {
     try {
       const { access_token } = req.body;
 
-      if (!access_token || typeof access_token !== "string") {
+      if (!access_token) {
         return res.status(400).json({
           success: false,
           message: "Bad Request",
-          err: "Valid access token required",
+          err: "Access token required",
           data: null,
         });
       }
 
-      const url = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
+      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
 
-      https
-        .get(url, (response) => {
-          let data = "";
+      const { email, name, picture } = response.data;
 
-          response.on("data", (chunk) => {
-            data += chunk;
-          });
+      let user = await prisma.users.findUnique({
+        where: {
+          email: email,
+        },
+        include: {
+          profile: true,
+        },
+      });
 
-          response.on("end", async () => {
-            try {
-              const googleResponse = JSON.parse(data);
-              const { email, name, picture, sub } = googleResponse;
-
-              if (!email || !name || !picture || !sub) {
-                return res.status(400).json({
-                  success: false,
-                  message: "Bad Request",
-                  err: "Invalid response from Google API",
-                  data: null,
-                });
-              }
-
-              let user = await prisma.users.findUnique({
-                where: { email: email },
-                include: { profiles: true },
-              });
-
-              if (!user) {
-                user = await prisma.users.upsert({
-                  where: { email: email },
-                  update: {
-                    googleId: sub,
-                    profiles: { update: { imageProfile: picture } },
-                  },
-                  create: {
-                    username: name,
-                    email: email,
-                    googleId: sub,
-                    isVerified: true,
-                    profiles: {
-                      create: {
-                        fullName: name,
-                        imageProfile: picture,
-                      },
-                    },
-                  },
-                });
-              }
-
-              delete user.password;
-
-              let token = jwt.sign(
-                {
-                  userId: user.userId,
-                  username: user.username,
-                  email: user.email,
-                },
-                process.env.JWT_SECRET
-              );
-
-              return res.status(200).json({
-                success: true,
-                message: "OK",
-                err: null,
-                data: { ...user, token },
-              });
-            } catch (error) {
-              console.error("Error processing Google response:", error);
-              next(error);
-            }
-          });
-        })
-        .on("error", (error) => {
-          console.error("Error during Google API request:", error);
-          next(error);
+      if (!user) {
+        user = await prisma.users.upsert({
+          where: {
+            email: email,
+          },
+          update: {
+            googleId: response.data.sub,
+            profile: { update: { imageProfile: picture } },
+          },
+          create: {
+            username: name,
+            email: email,
+            googleId: response.data.sub,
+            isVerified: true,
+            profile: {
+              create: {
+                fullName: name,
+                imageProfile: picture,
+              },
+            },
+          },
         });
+      }
+
+      delete user.password;
+
+      let token = jwt.sign(
+        { userId: user.userId, username: user.username, email: user.email },
+        process.env.JWT_SECRET
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Login success",
+        err: null,
+        data: { ...user, token },
+      });
     } catch (error) {
-      console.error("Error during Google login:", error);
       next(error);
     }
   },
