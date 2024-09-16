@@ -898,9 +898,11 @@ module.exports = {
         });
       }
 
-      const response = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`;
-
-      const { email, name, picture } = response.data;
+      // Menggunakan axios untuk melakukan permintaan HTTP ke Google API
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
+      );
+      const { email, name, picture, sub } = response.data;
 
       let user = await prisma.users.findUnique({
         where: {
@@ -917,13 +919,13 @@ module.exports = {
             email: email,
           },
           update: {
-            googleId: response.data.sub,
+            googleId: sub,
             profile: { update: { imageProfile: picture } },
           },
           create: {
             username: name,
             email: email,
-            googleId: response.data.sub,
+            googleId: sub,
             isVerified: true,
             profile: {
               create: {
