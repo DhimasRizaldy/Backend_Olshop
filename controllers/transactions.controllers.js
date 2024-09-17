@@ -56,6 +56,113 @@ module.exports = {
   },
 
   // get detail transaction
+  // getDetailTransaction: async (req, res, next) => {
+  //   try {
+  //     const userId = req.user.userId; // Mengambil ID pengguna dari request (misalnya dari middleware autentikasi)
+  //     const userRole = req.user.role; // Mengambil role pengguna dari request (misalnya dari middleware autentikasi)
+  //     const { transactionId } = req.params; // Mendapatkan ID transaksi dari parameter request
+
+  //     // Mendapatkan detail transaksi berdasarkan ID transaksi
+  //     const transaction = await prisma.transactions.findUnique({
+  //       where: {
+  //         transactionId: transactionId,
+  //       },
+  //       include: {
+  //         address: true, // Sertakan detail alamat pengiriman
+  //         promo: true, // Sertakan detail promo jika ada
+  //         users: {
+  //           select: {
+  //             userId: true, // Ambil userId
+  //             username: true, // Ambil nama pengguna
+  //             email: true, // Ambil email pengguna
+  //             profiles: {
+  //               select: {
+  //                 phoneNumber: true, // Ambil nomor telepon dari profil
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     });
+
+  //     if (!transaction) {
+  //       return res.status(404).json({
+  //         success: false,
+  //         message: "Transaction not found",
+  //       });
+  //     }
+
+  //     // Memastikan user yang meminta transaksi memiliki akses ke transaksi tersebut
+  //     if (transaction.userId !== userId && userRole !== "ADMIN") {
+  //       return res.status(403).json({
+  //         success: false,
+  //         message: "Access denied",
+  //       });
+  //     }
+
+  //     // Ambil detail carts berdasarkan cartIds yang ada di transaksi
+  //     const carts = await prisma.carts.findMany({
+  //       where: {
+  //         cartId: { in: transaction.cartIds }, // Filter berdasarkan cartIds yang ada di transaksi
+  //       },
+  //       include: {
+  //         products: true, // Sertakan detail produk
+  //       },
+  //     });
+
+  //     // Memetakan produk dalam cart untuk mendapatkan nama, harga, kuantitas, dan gambar produk
+  //     const cartDetails = carts.map((cart) => {
+  //       const productPrice = cart.products.promoPrice || cart.products.price; // Gunakan promoPrice jika ada, jika tidak gunakan price
+  //       return {
+  //         productName: cart.products.name, // Nama produk
+  //         productPrice: productPrice.toString(), // Harga produk (konversi BigInt ke string)
+  //         productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
+  //         productImage: cart.products.image, // Gambar produk
+  //         totalPricePerProduct: (
+  //           BigInt(productPrice) * BigInt(cart.qty)
+  //         ).toString(), // Total harga per produk (konversi BigInt ke string)
+  //       };
+  //     });
+
+  //     // Mengirimkan respons dengan detail transaksi lengkap dan produk dalam cart
+  //     return res.status(200).json({
+  //       success: true,
+  //       message: "Get transaction detail successfully",
+  //       data: {
+  //         transactionId: transaction.transactionId,
+  //         userId: transaction.users.userId,
+  //         discount: transaction.discount.toString(), // Konversi BigInt ke string
+  //         ongkirValue: transaction.ongkirValue.toString(), // Konversi BigInt ke string
+  //         total: transaction.total.toString(), // Konversi BigInt ke string
+  //         status_payment: transaction.status_payment,
+  //         payment_type: transaction.payment_type,
+  //         transaction_time: transaction.transaction_time,
+  //         courier: transaction.courier,
+  //         receiptDelivery: transaction.receiptDelivery,
+  //         shippingStatus: transaction.shippingStatus,
+  //         paymentUrl: transaction.paymentUrl,
+  //         token: transaction.token,
+  //         address: transaction.address,
+  //         promo: transaction.promo,
+  //         user: {
+  //           userId: transaction.users.userId,
+  //           username: transaction.users.username,
+  //           email: transaction.users.email,
+  //           phoneNumber: transaction.users.profiles.phoneNumber, // Nomor telepon dari profil pengguna
+  //         },
+  //         cartDetails, // Detail produk dalam cart
+  //       },
+  //     });
+  //   } catch (error) {
+  //     // Menangani kesalahan jika terjadi
+  //     console.error("Error fetching transaction details:", error.message);
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: "Failed to get transaction details",
+  //       error: error.message,
+  //     });
+  //   }
+  // },
   getDetailTransaction: async (req, res, next) => {
     try {
       const userId = req.user.userId; // Mengambil ID pengguna dari request (misalnya dari middleware autentikasi)
@@ -106,20 +213,24 @@ module.exports = {
           cartId: { in: transaction.cartIds }, // Filter berdasarkan cartIds yang ada di transaksi
         },
         include: {
-          products: true, // Sertakan detail produk
+          products: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
         },
       });
 
       // Memetakan produk dalam cart untuk mendapatkan nama, harga, kuantitas, dan gambar produk
       const cartDetails = carts.map((cart) => {
-        const productPrice = cart.products.promoPrice || cart.products.price; // Gunakan promoPrice jika ada, jika tidak gunakan price
         return {
           productName: cart.products.name, // Nama produk
-          productPrice: productPrice.toString(), // Harga produk (konversi BigInt ke string)
+          productPrice: cart.price.toString(), // Harga produk dari tabel Carts (konversi BigInt ke string)
           productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
           productImage: cart.products.image, // Gambar produk
           totalPricePerProduct: (
-            BigInt(productPrice) * BigInt(cart.qty)
+            BigInt(cart.price) * BigInt(cart.qty)
           ).toString(), // Total harga per produk (konversi BigInt ke string)
         };
       });
