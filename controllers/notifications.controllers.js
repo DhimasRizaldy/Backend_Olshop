@@ -95,18 +95,31 @@ module.exports = {
     try {
       const { notificationId } = req.params;
 
-      // Cari notifikasi yang sesuai dengan notificationId dan userId
+      // Cari notifikasi yang sesuai dengan notificationId
       const notification = await prisma.notifications.findUnique({
         where: {
           notificationId: notificationId,
         },
       });
 
-      // Cek apakah notifikasi ditemukan dan milik user yang sedang login
-      if (!notification || notification.userId !== req.user.userId) {
+      // Cek apakah notifikasi ditemukan
+      if (!notification) {
         return res.status(404).json({
           status: false,
           message: "Notification not found",
+          err: null,
+          data: null,
+        });
+      }
+
+      // Cek apakah notifikasi milik user yang sedang login atau user adalah admin
+      if (
+        notification.userId !== req.user.userId &&
+        req.user.role !== "ADMIN"
+      ) {
+        return res.status(403).json({
+          status: false,
+          message: "You do not have permission to update this notification",
           err: null,
           data: null,
         });

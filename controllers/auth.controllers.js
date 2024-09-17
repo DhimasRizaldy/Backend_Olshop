@@ -121,7 +121,7 @@ module.exports = {
         return res.status(400).json({
           status: false,
           message: "Bad Request",
-          err: "All fields are required",
+          err: "Harap isi semua kolom dengan lengkap",
           data: null,
         });
       }
@@ -191,7 +191,7 @@ module.exports = {
         return res.status(400).json({
           status: false,
           message: "Bad Request",
-          err: "Email sudah terdaftar",
+          err: "Username sudah terdaftar",
           data: null,
         });
       }
