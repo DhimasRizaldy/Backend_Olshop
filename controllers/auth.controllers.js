@@ -1034,7 +1034,7 @@ module.exports = {
       }
 
       // Cari user berdasarkan email
-      let user = await prismaClient.users.findUnique({
+      let user = await prisma.users.findUnique({
         where: {
           email: email,
         },
@@ -1045,7 +1045,7 @@ module.exports = {
 
       // Jika user belum ada, buat user baru
       if (!user) {
-        user = await prismaClient.users.upsert({
+        user = await prisma.users.upsert({
           where: {
             email: email,
           },
@@ -1073,7 +1073,7 @@ module.exports = {
       } else {
         // Jika user sudah ada tetapi belum memiliki profile, buat profil baru
         if (!user.profiles) {
-          await prismaClient.profiles.create({
+          await prisma.profiles.create({
             data: {
               userId: user.userId,
               fullName: name,
