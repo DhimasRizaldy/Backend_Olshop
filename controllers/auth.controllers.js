@@ -889,21 +889,33 @@ module.exports = {
     try {
       const { access_token } = req.body;
 
+      // Validasi access_token
       if (!access_token) {
         return res.status(400).json({
           success: false,
-          message: "Bad Request",
-          err: "Access token required",
+          message: "Access token required",
+          err: "Bad Request",
           data: null,
         });
       }
 
-      // Menggunakan axios untuk melakukan permintaan HTTP ke Google API
+      // Menggunakan axios untuk mengambil data user dari Google API
       const response = await axios.get(
         `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
       );
-      const { email, name, picture, sub } = response.data;
 
+      // Validasi apakah respons Google berisi data yang dibutuhkan
+      const { email, name, picture, sub } = response.data;
+      if (!email || !name || !sub) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Google account data",
+          err: "Google account is missing essential information",
+          data: null,
+        });
+      }
+
+      // Cari user berdasarkan email
       let user = await prisma.users.findUnique({
         where: {
           email: email,
@@ -913,6 +925,7 @@ module.exports = {
         },
       });
 
+      // Jika user belum ada, buat user baru
       if (!user) {
         user = await prisma.users.upsert({
           where: {
@@ -920,7 +933,11 @@ module.exports = {
           },
           update: {
             googleId: sub,
-            profiles: { update: { imageProfile: picture } },
+            profiles: {
+              update: {
+                imageProfile: picture,
+              },
+            },
           },
           create: {
             username: name,
@@ -935,23 +952,55 @@ module.exports = {
             },
           },
         });
+      } else {
+        // Jika user sudah ada tetapi belum memiliki profile, buat profil baru
+        if (!user.profiles) {
+          await prisma.profiles.create({
+            data: {
+              userId: user.userId,
+              fullName: name,
+              imageProfile: picture,
+            },
+          });
+        }
       }
 
-      delete user.password;
+      // Hapus password dari objek user sebelum mengirim respons
+      if (user.password) {
+        delete user.password;
+      }
 
+      // Generate token JWT
       let token = jwt.sign(
-        { userId: user.userId, username: user.username, email: user.email },
-        process.env.JWT_SECRET
+        {
+          userId: user.userId,
+          username: user.username,
+          email: user.email,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" } // Token valid selama 1 jam
       );
 
+      // Kirim respons sukses
       return res.status(200).json({
         success: true,
-        message: "Login success",
+        message: "Login successful",
         err: null,
         data: { ...user, token },
       });
     } catch (error) {
-      next(error);
+      // Penanganan error, misalnya kesalahan saat komunikasi dengan Google API atau Prisma
+      if (error.response) {
+        return res.status(error.response.status).json({
+          success: false,
+          message: "Error fetching data from Google",
+          err: error.response.data,
+          data: null,
+        });
+      }
+
+      // Kesalahan umum lain
+      return next(error);
     }
   },
 
