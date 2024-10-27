@@ -8,6 +8,30 @@ module.exports = {
       const { name, email, address, phoneNumber } = req.body;
       const supplierId = uuidv4();
 
+      // Check if email already exists
+      const emailExists = await prisma.suppliers.findUnique({
+        where: { email },
+      });
+
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+
+      // Check if phone number already exists
+      const phoneExists = await prisma.suppliers.findUnique({
+        where: { phoneNumber },
+      });
+
+      if (phoneExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number already in use",
+        });
+      }
+
       const newSupplier = await prisma.suppliers.create({
         data: {
           supplierId,
@@ -60,6 +84,30 @@ module.exports = {
           message: "Not found",
           err: "Supplier not found with id: " + supplierId,
           data: null,
+        });
+      }
+
+      // Check if email already exists and is not the current supplier's email
+      const emailExists = await prisma.suppliers.findUnique({
+        where: { email },
+      });
+
+      if (emailExists && emailExists.supplierId !== supplierId) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+
+      // Check if phone number already exists and is not the current supplier's phone number
+      const phoneExists = await prisma.suppliers.findUnique({
+        where: { phoneNumber },
+      });
+
+      if (phoneExists && phoneExists.supplierId !== supplierId) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number already in use",
         });
       }
 
