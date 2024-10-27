@@ -5,7 +5,15 @@ module.exports = {
   // create address
   createAddress: async (req, res, next) => {
     try {
-      const { nameAddress, address, city, country, postalCode } = req.body;
+      const {
+        nameAddress,
+        address,
+        cityId,
+        provinceId,
+        cityName,
+        provinceName,
+        postalCode,
+      } = req.body;
       const addressId = uuidv4();
       const userId = req.user.userId;
 
@@ -14,8 +22,10 @@ module.exports = {
           addressId: addressId,
           nameAddress: nameAddress,
           address: address,
-          city: city,
-          country: country,
+          cityId: cityId,
+          provinceId: provinceId,
+          cityName: cityName,
+          provinceName: provinceName,
           postalCode: postalCode,
           userId: userId, // Asumsikan relasi user menggunakan userId secara langsung
         },
@@ -69,7 +79,15 @@ module.exports = {
     try {
       const { addressId } = req.params;
       const userId = req.user.userId;
-      const { nameAddress, address, city, country, postalCode } = req.body;
+      const {
+        nameAddress,
+        address,
+        cityId,
+        provinceId,
+        cityName,
+        provinceName,
+        postalCode,
+      } = req.body;
 
       // Cek ketersediaan user
       const user = await prisma.users.findUnique({
@@ -109,8 +127,10 @@ module.exports = {
         data: {
           nameAddress,
           address,
-          city,
-          country,
+          cityId,
+          provinceId,
+          cityName,
+          provinceName,
           postalCode,
         },
       });

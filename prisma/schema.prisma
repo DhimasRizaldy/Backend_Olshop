@@ -40,17 +40,19 @@ model Profiles {
 }
 
 model Address {
-  addressId    String         @id @default(uuid())
-  userId       String
-  nameAddress  String?
-  address      String?
-  city         String?
-  country      String?
-  postalCode   String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  users        Users          @relation(fields: [userId], references: [userId])
-  transactions Transactions[]
+  addressId     String         @id @default(uuid())
+  userId        String
+  nameAddress   String?
+  address       String?
+  cityId        String?        // Menambahkan cityId
+  provinceId    String?        // Menambahkan provinceId
+  cityName      String?        // Mengganti city menjadi cityName
+  provinceName  String?        // Mengganti country menjadi provinceName
+  postalCode    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         Users          @relation(fields: [userId], references: [userId])
+  transactions  Transactions[]
 }
 
 model Categories {
