@@ -106,20 +106,24 @@ module.exports = {
   //         cartId: { in: transaction.cartIds }, // Filter berdasarkan cartIds yang ada di transaksi
   //       },
   //       include: {
-  //         products: true, // Sertakan detail produk
+  //         products: {
+  //           select: {
+  //             name: true,
+  //             image: true,
+  //           },
+  //         },
   //       },
   //     });
 
   //     // Memetakan produk dalam cart untuk mendapatkan nama, harga, kuantitas, dan gambar produk
   //     const cartDetails = carts.map((cart) => {
-  //       const productPrice = cart.products.promoPrice || cart.products.price; // Gunakan promoPrice jika ada, jika tidak gunakan price
   //       return {
   //         productName: cart.products.name, // Nama produk
-  //         productPrice: productPrice.toString(), // Harga produk (konversi BigInt ke string)
+  //         productPrice: cart.price.toString(), // Harga produk dari tabel Carts (konversi BigInt ke string)
   //         productQuantity: cart.qty, // Kuantitas produk yang dibeli (qty dari Carts model)
   //         productImage: cart.products.image, // Gambar produk
   //         totalPricePerProduct: (
-  //           BigInt(productPrice) * BigInt(cart.qty)
+  //           BigInt(cart.price) * BigInt(cart.qty)
   //         ).toString(), // Total harga per produk (konversi BigInt ke string)
   //       };
   //     });
@@ -175,7 +179,15 @@ module.exports = {
           transactionId: transactionId,
         },
         include: {
-          address: true, // Sertakan detail alamat pengiriman
+          address: {
+            select: {
+              nameAddress: true,
+              address: true,
+              nameCity: true,
+              nameProvince: true,
+              postalCode: true,
+            },
+          }, // Sertakan detail alamat pengiriman
           promo: true, // Sertakan detail promo jika ada
           users: {
             select: {
@@ -253,7 +265,13 @@ module.exports = {
           shippingStatus: transaction.shippingStatus,
           paymentUrl: transaction.paymentUrl,
           token: transaction.token,
-          address: transaction.address,
+          address: {
+            nameAddress: transaction.address.nameAddress,
+            address: transaction.address.address,
+            nameCity: transaction.address.nameCity,
+            nameProvince: transaction.address.nameProvince,
+            postalCode: transaction.address.postalCode,
+          },
           promo: transaction.promo,
           user: {
             userId: transaction.users.userId,
