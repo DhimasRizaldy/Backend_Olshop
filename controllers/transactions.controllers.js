@@ -167,6 +167,7 @@ module.exports = {
   //     });
   //   }
   // },
+
   getDetailTransaction: async (req, res, next) => {
     try {
       const userId = req.user.userId; // Mengambil ID pengguna dari request (misalnya dari middleware autentikasi)
@@ -183,8 +184,8 @@ module.exports = {
             select: {
               nameAddress: true,
               address: true,
-              nameCity: true,
-              nameProvince: true,
+              cityName: true,
+              provinceName: true,
               postalCode: true,
             },
           }, // Sertakan detail alamat pengiriman
@@ -268,8 +269,8 @@ module.exports = {
           address: {
             nameAddress: transaction.address.nameAddress,
             address: transaction.address.address,
-            nameCity: transaction.address.nameCity,
-            nameProvince: transaction.address.nameProvince,
+            cityName: transaction.address.cityName,
+            provinceName: transaction.address.provinceName,
             postalCode: transaction.address.postalCode,
           },
           promo: transaction.promo,
