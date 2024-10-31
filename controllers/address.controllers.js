@@ -194,16 +194,19 @@ module.exports = {
         });
       }
 
-      // Hapus alamat
-      const deleteAddress = await prisma.address.delete({
+      // Ubah nilai isDelete menjadi true
+      const updateAddress = await prisma.address.update({
         where: {
           addressId: addressId,
+        },
+        data: {
+          isDelete: true,
         },
       });
       res.status(200).json({
         success: true,
-        message: "Address deleted successfully",
-        data: deleteAddress,
+        message: "Address marked as deleted successfully",
+        data: updateAddress,
       });
     } catch (error) {
       console.error(error); // Log error to console for debugging

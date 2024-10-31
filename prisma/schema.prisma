@@ -51,6 +51,7 @@ model Address {
   postalCode    String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  isDelete      Boolean        @default(false) // Menambahkan isDelete dengan default false
   users         Users          @relation(fields: [userId], references: [userId])
   transactions  Transactions[]
 }
